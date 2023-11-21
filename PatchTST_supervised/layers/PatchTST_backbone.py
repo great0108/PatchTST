@@ -20,7 +20,7 @@ class PatchTST_backbone(nn.Module):
                  padding_var:Optional[int]=None, attn_mask:Optional[Tensor]=None, res_attention:bool=True, pre_norm:bool=False, store_attn:bool=False,
                  pe:str='zeros', learn_pe:bool=True, fc_dropout:float=0., head_dropout = 0, padding_patch = None,
                  pretrain_head:bool=False, head_type = 'flatten', individual = False, revin = True, affine = True, subtract_last = False,
-                 verbose:bool=False, **kwargs):
+                 verbose:bool=False, feature_mix=True, **kwargs):
         
         super().__init__()
         
@@ -42,7 +42,7 @@ class PatchTST_backbone(nn.Module):
                                 n_layers=n_layers, d_model=d_model, n_heads=n_heads, d_k=d_k, d_v=d_v, d_ff=d_ff,
                                 attn_dropout=attn_dropout, dropout=dropout, act=act, key_padding_mask=key_padding_mask, padding_var=padding_var,
                                 attn_mask=attn_mask, res_attention=res_attention, pre_norm=pre_norm, store_attn=store_attn,
-                                pe=pe, learn_pe=learn_pe, verbose=verbose, **kwargs)
+                                pe=pe, learn_pe=learn_pe, verbose=verbose, feature_mix=feature_mix, **kwargs)
 
         # Head
         self.head_nf = d_model * patch_num
@@ -130,7 +130,7 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
                  n_layers=3, d_model=128, n_heads=16, d_k=None, d_v=None,
                  d_ff=256, norm='BatchNorm', attn_dropout=0., dropout=0., act="gelu", store_attn=False,
                  key_padding_mask='auto', padding_var=None, attn_mask=None, res_attention=True, pre_norm=False,
-                 pe='zeros', learn_pe=True, verbose=False, **kwargs):
+                 pe='zeros', learn_pe=True, verbose=False, feature_mix=True, **kwargs):
         
         
         super().__init__()
@@ -151,7 +151,7 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
 
         # Encoder
         self.encoder = TSTEncoder(q_len, d_model, n_heads, d_k=d_k, d_v=d_v, d_ff=d_ff, norm=norm, attn_dropout=attn_dropout, dropout=dropout,
-                                   pre_norm=pre_norm, activation=act, res_attention=res_attention, n_layers=n_layers, store_attn=store_attn)
+                                   pre_norm=pre_norm, activation=act, res_attention=res_attention, n_layers=n_layers, store_attn=store_attn, feature_mix=feature_mix, c_in=c_in)
 
         
     def forward(self, x) -> Tensor:                                              # x: [bs x nvars x patch_len x patch_num]
@@ -177,13 +177,13 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
 class TSTEncoder(nn.Module):
     def __init__(self, q_len, d_model, n_heads, d_k=None, d_v=None, d_ff=None, 
                         norm='BatchNorm', attn_dropout=0., dropout=0., activation='gelu',
-                        res_attention=False, n_layers=1, pre_norm=False, store_attn=False):
+                        res_attention=False, n_layers=1, pre_norm=False, store_attn=False, feature_mix=True, c_in=None):
         super().__init__()
 
         self.layers = nn.ModuleList([TSTEncoderLayer(q_len, d_model, n_heads=n_heads, d_k=d_k, d_v=d_v, d_ff=d_ff, norm=norm,
                                                       attn_dropout=attn_dropout, dropout=dropout,
                                                       activation=activation, res_attention=res_attention,
-                                                      pre_norm=pre_norm, store_attn=store_attn) for i in range(n_layers)])
+                                                      pre_norm=pre_norm, store_attn=store_attn, feature_mix=feature_mix, c_in=c_in) for i in range(n_layers)])
         self.res_attention = res_attention
 
     def forward(self, src:Tensor, key_padding_mask:Optional[Tensor]=None, attn_mask:Optional[Tensor]=None):
@@ -200,7 +200,7 @@ class TSTEncoder(nn.Module):
 
 class TSTEncoderLayer(nn.Module):
     def __init__(self, q_len, d_model, n_heads, d_k=None, d_v=None, d_ff=256, store_attn=False,
-                 norm='BatchNorm', attn_dropout=0, dropout=0., bias=True, activation="gelu", res_attention=False, pre_norm=False):
+                 norm='BatchNorm', attn_dropout=0, dropout=0., bias=True, activation="gelu", res_attention=False, pre_norm=False, feature_mix=True, c_in=None):
         super().__init__()
         assert not d_model%n_heads, f"d_model ({d_model}) must be divisible by n_heads ({n_heads})"
         d_k = d_model // n_heads if d_k is None else d_k
@@ -230,8 +230,15 @@ class TSTEncoderLayer(nn.Module):
         else:
             self.norm_ffn = nn.LayerNorm(d_model)
 
+        self.feature_ff = nn.Sequential(nn.Linear(c_in, d_ff, bias=bias),
+                                get_activation_fn(activation),
+                                nn.Dropout(dropout),
+                                nn.Linear(d_ff, c_in, bias=bias),)
+
         self.pre_norm = pre_norm
         self.store_attn = store_attn
+        self.c_in = c_in
+        self.feature_mix = feature_mix
 
 
     def forward(self, src:Tensor, prev:Optional[Tensor]=None, key_padding_mask:Optional[Tensor]=None, attn_mask:Optional[Tensor]=None) -> Tensor:
@@ -260,6 +267,14 @@ class TSTEncoderLayer(nn.Module):
         src = src + self.dropout_ffn(src2) # Add: residual connection with residual dropout
         if not self.pre_norm:
             src = self.norm_ffn(src)
+
+        if self.feature_mix:
+            src2 = torch.reshape(src, (-1, self.c_in, src.shape[-2], src.shape[-1]))    # [bs x nvars x patch_num X d_model]
+            src2 = src2.permute(0, 2, 3, 1)                                             # [bs x patch_num X d_model X nvars]
+            src2 = self.feature_ff(src2)                                                # [bs x patch_num X d_model X nvars]
+            src2 = src2.permute(0, 3, 1, 2)                                             # [bs x nvars x patch_num X d_model]
+            src2 = torch.reshape(src2, (-1, src.shape[-2], src.shape[-1]))              # [bs * nvars x patch_num X d_model]
+            src = src + self.dropout_ffn(src2)
 
         if self.res_attention:
             return src, scores
