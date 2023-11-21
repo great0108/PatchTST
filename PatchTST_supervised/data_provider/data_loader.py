@@ -93,7 +93,6 @@ class Dataset_ETT_hour(Dataset):
         return seq_x, seq_y, seq_x_mark, seq_y_mark
 
     def __len__(self):
-        print(len(self.data_x), self.seq_len, self.pred_len)
         return len(self.data_x) - self.seq_len - self.pred_len + 1
 
     def inverse_transform(self, data):

@@ -1,0 +1,6 @@
+test_DLinear_ETTh1_ftM_sl96_ll48_pl96_dm512_nh8_el2_dl1_df2048_fc1_ebtimeF_dtTrue_test_0  
+mse:0.41640642285346985, mae:0.4280841648578644, rse:0.6118910908699036
+
+test_DLinear_ETTh1_ftM_sl96_ll48_pl96_dm512_nh8_el2_dl1_df2048_fc1_ebtimeF_dtTrue_test_1  
+mse:0.41676610708236694, mae:0.42841291427612305, rse:0.6121553182601929
+
