@@ -230,10 +230,12 @@ class TSTEncoderLayer(nn.Module):
         else:
             self.norm_ffn = nn.LayerNorm(d_model)
 
-        self.feature_ff = nn.Sequential(nn.Linear(c_in, d_ff, bias=bias),
+        self.feature_ff = nn.Sequential(Transpose(1,3),
+                                nn.Linear(c_in, d_ff, bias=bias),
                                 get_activation_fn(activation),
                                 nn.Dropout(dropout),
-                                nn.Linear(d_ff, c_in, bias=bias),)
+                                nn.Linear(d_ff, c_in, bias=bias),
+                                Transpose(1,3))
 
         self.pre_norm = pre_norm
         self.store_attn = store_attn
@@ -269,11 +271,10 @@ class TSTEncoderLayer(nn.Module):
             src = self.norm_ffn(src)
 
         if self.feature_mix:
-            src2 = torch.reshape(src, (-1, self.c_in, src.shape[-2], src.shape[-1]))    # [bs x nvars x patch_num X d_model]
-            src2 = src2.permute(0, 2, 3, 1)                                             # [bs x patch_num X d_model X nvars]
-            src2 = self.feature_ff(src2)                                                # [bs x patch_num X d_model X nvars]
-            src2 = src2.permute(0, 3, 1, 2)                                             # [bs x nvars x patch_num X d_model]
-            src2 = torch.reshape(src2, (-1, src.shape[-2], src.shape[-1]))              # [bs * nvars x patch_num X d_model]
+            src2 = torch.reshape(src, (-1, self.c_in, src.shape[-2], src.shape[-1]))      # [bs x nvars x patch_num X d_model]
+            src2 = self.feature_ff(src2)                                                  
+            src2 = torch.reshape(src2, (-1, src.shape[-2], src.shape[-1]))                # [bs * nvars x patch_num X d_model]
+            src2 = self.norm_ffn(src2)
             src = src + self.dropout_ffn(src2)
 
         if self.res_attention:
