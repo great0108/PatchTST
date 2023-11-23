@@ -239,6 +239,7 @@ class TSTEncoderLayer(nn.Module):
                                 nn.Linear(d_ff, c_in, bias=bias),
                                 Transpose(1,3))
 
+
         self.mask = LocalMask(q_len, q_len * mask_kernel_ratio, device="cuda")
 
         self.pre_norm = pre_norm

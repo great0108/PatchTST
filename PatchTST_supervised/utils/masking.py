@@ -30,7 +30,7 @@ class LocalMask():
     def __init__(self, L, tf_kernel_size, device="cpu"):
         with torch.no_grad():
             a = torch.arange(L).repeat(L,1)
-            self._mask = torch.abs(torch.arange(L).reshape(-1, 1) - a) < tf_kernel_size
+            self._mask = torch.abs(torch.arange(L).reshape(-1, 1) - a) > tf_kernel_size
             self._mask = self._mask.bool().to(device)
 
     @property
