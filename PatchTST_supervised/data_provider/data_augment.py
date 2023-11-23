@@ -20,5 +20,3 @@ def slope_aug(data, slope=0.02):
         np.expand_dims(np.arange(0, slope, slope/len(data)), 0),
         data.shape[1], axis=0)
     return data + slope
-
-print(slope_aug(np.array([[1,2], [1,2]])))

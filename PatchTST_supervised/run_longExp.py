@@ -51,7 +51,7 @@ if __name__ == '__main__':
     parser.add_argument('--kernel_size', type=int, default=25, help='decomposition-kernel')
     parser.add_argument('--individual', type=int, default=0, help='individual head; True 1 False 0')
     parser.add_argument('--feature_mix', type=int, default=0, help='feature_mix; True 1 False 0')
-    parser.add_argument('--mask_kernel_ratio', type=float, default=0.5, help='mask kernel range; True 1 False 0')
+    parser.add_argument('--mask_kernel_ratio', type=float, default=1, help='mask kernel range; True 1 False 0')
     parser.add_argument('--norm', type=str, default="InstanceNorm", help='norm name, options: [BatchNorm, LayerNorm, InstanceNorm]')
 
     # Formers 
