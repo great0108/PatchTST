@@ -45,6 +45,8 @@ class Model(nn.Module):
         
         decomposition = configs.decomposition
         kernel_size = configs.kernel_size 
+        feature_mix = configs.feature_mix
+        mask_kernel_ratio = configs.mask_kernel_ratio
         
         
         # model
@@ -58,7 +60,7 @@ class Model(nn.Module):
                                   attn_mask=attn_mask, res_attention=res_attention, pre_norm=pre_norm, store_attn=store_attn,
                                   pe=pe, learn_pe=learn_pe, fc_dropout=fc_dropout, head_dropout=head_dropout, padding_patch = padding_patch,
                                   pretrain_head=pretrain_head, head_type=head_type, individual=individual, revin=revin, affine=affine,
-                                  subtract_last=subtract_last, verbose=verbose, feature_mix=feature_mix, **kwargs)
+                                  subtract_last=subtract_last, verbose=verbose, feature_mix=feature_mix, mask_kernel_ratio=mask_kernel_ratio, **kwargs)
             self.model_res = PatchTST_backbone(c_in=c_in, context_window = context_window, target_window=target_window, patch_len=patch_len, stride=stride, 
                                   max_seq_len=max_seq_len, n_layers=n_layers, d_model=d_model,
                                   n_heads=n_heads, d_k=d_k, d_v=d_v, d_ff=d_ff, norm=norm, attn_dropout=attn_dropout,
@@ -66,7 +68,7 @@ class Model(nn.Module):
                                   attn_mask=attn_mask, res_attention=res_attention, pre_norm=pre_norm, store_attn=store_attn,
                                   pe=pe, learn_pe=learn_pe, fc_dropout=fc_dropout, head_dropout=head_dropout, padding_patch = padding_patch,
                                   pretrain_head=pretrain_head, head_type=head_type, individual=individual, revin=revin, affine=affine,
-                                  subtract_last=subtract_last, verbose=verbose, feature_mix=feature_mix, **kwargs)
+                                  subtract_last=subtract_last, verbose=verbose, feature_mix=feature_mix, mask_kernel_ratio=mask_kernel_ratio, **kwargs)
         else:
             self.model = PatchTST_backbone(c_in=c_in, context_window = context_window, target_window=target_window, patch_len=patch_len, stride=stride, 
                                   max_seq_len=max_seq_len, n_layers=n_layers, d_model=d_model,
@@ -75,7 +77,7 @@ class Model(nn.Module):
                                   attn_mask=attn_mask, res_attention=res_attention, pre_norm=pre_norm, store_attn=store_attn,
                                   pe=pe, learn_pe=learn_pe, fc_dropout=fc_dropout, head_dropout=head_dropout, padding_patch = padding_patch,
                                   pretrain_head=pretrain_head, head_type=head_type, individual=individual, revin=revin, affine=affine,
-                                  subtract_last=subtract_last, verbose=verbose, feature_mix=feature_mix, **kwargs)
+                                  subtract_last=subtract_last, verbose=verbose, feature_mix=feature_mix, mask_kernel_ratio=mask_kernel_ratio, **kwargs)
     
     
     def forward(self, x):           # x: [Batch, Input length, Channel]
