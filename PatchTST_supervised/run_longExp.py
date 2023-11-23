@@ -53,6 +53,7 @@ if __name__ == '__main__':
     parser.add_argument('--feature_mix', type=int, default=0, help='feature_mix; True 1 False 0')
     parser.add_argument('--mask_kernel_ratio', type=float, default=0.5, help='mask kernel range; True 1 False 0')
     parser.add_argument('--norm', type=str, default="InstanceNorm", help='norm name, options: [BatchNorm, LayerNorm, InstanceNorm]')
+    parser.add_argument('--add_std', type=int, default=1, help='add std in head input; True 1 False 0')
 
     # Formers 
     parser.add_argument('--embed_type', type=int, default=0, help='0: default 1: value embedding + temporal embedding + positional embedding 2: value embedding + temporal embedding 3: value embedding + positional embedding 4: value embedding')
@@ -90,7 +91,7 @@ if __name__ == '__main__':
     parser.add_argument('--use_amp', action='store_true', help='use automatic mixed precision training', default=False)
 
     # GPU
-    parser.add_argument('--use_gpu', type=bool, default=True, help='use gpu')
+    parser.add_argument('--use_gpu', type=bool, default=False, help='use gpu')
     parser.add_argument('--gpu', type=int, default=0, help='gpu')
     parser.add_argument('--use_multi_gpu', action='store_true', help='use multiple gpus', default=False)
     parser.add_argument('--devices', type=str, default='0,1,2,3', help='device ids of multile gpus')
