@@ -7,7 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import StandardScaler
 from utils.timefeatures import time_features
 import warnings
-from data_provider.data_augment import distance_std_aug
+from data_provider.data_augment import distance_normal_aug, normal_aug, slope_aug
 
 warnings.filterwarnings('ignore')
 
@@ -82,43 +82,26 @@ class Dataset_ETT_hour(Dataset):
         self.data_stamp = data_stamp
 
     def __getitem__(self, index):
-        if self.aug == 0:
-            s_begin = index
-            s_end = s_begin + self.seq_len
-            r_begin = s_end - self.label_len
-            r_end = r_begin + self.label_len + self.pred_len
+        if self.aug > 0:
+            index //= 2
+        
+        s_begin = index
+        s_end = s_begin + self.seq_len
+        r_begin = s_end - self.label_len
+        r_end = r_begin + self.label_len + self.pred_len
 
-            seq_x = self.data_x[s_begin:s_end]
-            seq_y = self.data_y[r_begin:r_end]
-            seq_x_mark = self.data_stamp[s_begin:s_end]
-            seq_y_mark = self.data_stamp[r_begin:r_end]
+        seq_x = self.data_x[s_begin:s_end]
+        seq_y = self.data_y[r_begin:r_end]
+        seq_x_mark = self.data_stamp[s_begin:s_end]
+        seq_y_mark = self.data_stamp[r_begin:r_end]
         
         if self.aug == 1:
-            if index % 2 == 0:
-                index //= 2
-                s_begin = index
-                s_end = s_begin + self.seq_len
-                r_begin = s_end - self.label_len
-                r_end = r_begin + self.label_len + self.pred_len
-
-                seq_x = self.data_x[s_begin:s_end]
-                seq_y = self.data_y[r_begin:r_end]
-                seq_x_mark = self.data_stamp[s_begin:s_end]
-                seq_y_mark = self.data_stamp[r_begin:r_end]
-
-            if index % 2 == 1:
-                index //= 2
-                s_begin = index
-                s_end = s_begin + self.seq_len
-                r_begin = s_end - self.label_len
-                r_end = r_begin + self.label_len + self.pred_len
-
-                seq_x = distance_std_aug(self.data_x[s_begin:s_end])
-                seq_y = self.data_y[r_begin:r_end]
-
-                seq_x_mark = self.data_stamp[s_begin:s_end]
-                seq_y_mark = self.data_stamp[r_begin:r_end]
-
+            seq_x = distance_normal_aug(seq_x)
+        elif self.aug == 2:
+            seq_x = normal_aug(seq_x)
+        elif self.aug == 3:
+            seq_x = slope_aug(seq_x)
+            
         return seq_x, seq_y, seq_x_mark, seq_y_mark
 
     def __len__(self):
