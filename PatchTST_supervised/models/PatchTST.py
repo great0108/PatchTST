@@ -47,6 +47,7 @@ class Model(nn.Module):
         kernel_size = configs.kernel_size 
         feature_mix = configs.feature_mix
         mask_kernel_ratio = configs.mask_kernel_ratio
+        norm = configs.norm
         
         
         # model

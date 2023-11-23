@@ -52,6 +52,7 @@ if __name__ == '__main__':
     parser.add_argument('--individual', type=int, default=0, help='individual head; True 1 False 0')
     parser.add_argument('--feature_mix', type=int, default=0, help='feature_mix; True 1 False 0')
     parser.add_argument('--mask_kernel_ratio', type=float, default=0.5, help='feature_mix; True 1 False 0')
+    parser.add_argument('--norm', type=str, default="BatchNorm", help='norm name, options: [BatchNorm, LayerNorm, InstanceNorm]')
 
     # Formers 
     parser.add_argument('--embed_type', type=int, default=0, help='0: default 1: value embedding + temporal embedding + positional embedding 2: value embedding + temporal embedding 3: value embedding + positional embedding 4: value embedding')
