@@ -216,8 +216,10 @@ class TSTEncoderLayer(nn.Module):
         self.dropout_attn = nn.Dropout(dropout)
         if "batch" in norm.lower():
             self.norm_attn = nn.Sequential(Transpose(1,2), nn.BatchNorm1d(d_model), Transpose(1,2))
-        else:
+        elif "layer" in norm.lower():
             self.norm_attn = nn.LayerNorm(d_model)
+        else:
+            self.norm_attn = nn.Sequential(Transpose(1,2), nn.InstanceNorm1d(d_model), Transpose(1,2))
 
         # Position-wise Feed-Forward
         self.ff = nn.Sequential(nn.Linear(d_model, d_ff, bias=bias),
@@ -229,8 +231,11 @@ class TSTEncoderLayer(nn.Module):
         self.dropout_ffn = nn.Dropout(dropout)
         if "batch" in norm.lower():
             self.norm_ffn = nn.Sequential(Transpose(1,2), nn.BatchNorm1d(d_model), Transpose(1,2))
-        else:
+        elif "layer" in norm.lower():
             self.norm_ffn = nn.LayerNorm(d_model)
+        else:
+            self.norm_ffn = nn.Sequential(Transpose(1,2), nn.InstanceNorm1d(d_model), Transpose(1,2))
+
 
         self.feature_ff = nn.Sequential(Transpose(1,3),
                                 nn.Linear(c_in, d_ff, bias=bias),
@@ -238,9 +243,16 @@ class TSTEncoderLayer(nn.Module):
                                 nn.Dropout(dropout),
                                 nn.Linear(d_ff, c_in, bias=bias),
                                 Transpose(1,3))
+        
+        self.dropout_feature = nn.Dropout(dropout)
+        if "batch" in norm.lower():
+            self.norm_feature = nn.Sequential(Transpose(1,2), nn.BatchNorm1d(d_model), Transpose(1,2))
+        elif "layer" in norm.lower():
+            self.norm_feature = nn.LayerNorm(d_model)
+        else:
+            self.norm_feature = nn.Sequential(Transpose(1,2), nn.InstanceNorm1d(d_model), Transpose(1,2))
 
-
-        self.mask = LocalMask(q_len, q_len * mask_kernel_ratio, device="cuda")
+        self.mask = LocalMask(q_len, q_len * mask_kernel_ratio, device="cpu")
 
         self.pre_norm = pre_norm
         self.store_attn = store_attn
@@ -279,8 +291,8 @@ class TSTEncoderLayer(nn.Module):
             src2 = torch.reshape(src, (-1, self.c_in, src.shape[-2], src.shape[-1]))      # [bs x nvars x patch_num X d_model]
             src2 = self.feature_ff(src2)                                                  
             src2 = torch.reshape(src2, (-1, src.shape[-2], src.shape[-1]))                # [bs * nvars x patch_num X d_model]
-            src2 = self.norm_ffn(src2)
-            src = src + self.dropout_ffn(src2)
+            src2 = self.norm_feature(src2)
+            src = src + self.dropout_feature(src2)
 
         if self.res_attention:
             return src, scores
