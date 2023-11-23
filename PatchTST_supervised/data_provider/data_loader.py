@@ -15,7 +15,7 @@ warnings.filterwarnings('ignore')
 class Dataset_ETT_hour(Dataset):
     def __init__(self, root_path, flag='train', size=None,
                  features='S', data_path='ETTh1.csv',
-                 target='OT', scale=True, timeenc=0, freq='h', aug=True):
+                 target='OT', scale=True, timeenc=0, freq='h', aug=0):
         # size [seq_len, label_len, pred_len]
         # info
         if size == None:
@@ -36,6 +36,7 @@ class Dataset_ETT_hour(Dataset):
         self.scale = scale
         self.timeenc = timeenc
         self.freq = freq
+        self.aug = aug
 
         self.root_path = root_path
         self.data_path = data_path
@@ -81,8 +82,7 @@ class Dataset_ETT_hour(Dataset):
         self.data_stamp = data_stamp
 
     def __getitem__(self, index):
-        if index % 2 == 0:
-            index //= 2
+        if self.aug == 0:
             s_begin = index
             s_end = s_begin + self.seq_len
             r_begin = s_end - self.label_len
@@ -92,24 +92,41 @@ class Dataset_ETT_hour(Dataset):
             seq_y = self.data_y[r_begin:r_end]
             seq_x_mark = self.data_stamp[s_begin:s_end]
             seq_y_mark = self.data_stamp[r_begin:r_end]
+        
+        if self.aug == 1:
+            if index % 2 == 0:
+                index //= 2
+                s_begin = index
+                s_end = s_begin + self.seq_len
+                r_begin = s_end - self.label_len
+                r_end = r_begin + self.label_len + self.pred_len
 
-        if index % 2 == 1:
-            index //= 2
-            s_begin = index
-            s_end = s_begin + self.seq_len
-            r_begin = s_end - self.label_len
-            r_end = r_begin + self.label_len + self.pred_len
+                seq_x = self.data_x[s_begin:s_end]
+                seq_y = self.data_y[r_begin:r_end]
+                seq_x_mark = self.data_stamp[s_begin:s_end]
+                seq_y_mark = self.data_stamp[r_begin:r_end]
 
-            seq_x = distance_std_aug(self.data_x[s_begin:s_end])
-            seq_y = self.data_y[r_begin:r_end]
+            if index % 2 == 1:
+                index //= 2
+                s_begin = index
+                s_end = s_begin + self.seq_len
+                r_begin = s_end - self.label_len
+                r_end = r_begin + self.label_len + self.pred_len
 
-            seq_x_mark = self.data_stamp[s_begin:s_end]
-            seq_y_mark = self.data_stamp[r_begin:r_end]
+                seq_x = distance_std_aug(self.data_x[s_begin:s_end])
+                seq_y = self.data_y[r_begin:r_end]
+
+                seq_x_mark = self.data_stamp[s_begin:s_end]
+                seq_y_mark = self.data_stamp[r_begin:r_end]
 
         return seq_x, seq_y, seq_x_mark, seq_y_mark
 
     def __len__(self):
-        return (len(self.data_x) - self.seq_len - self.pred_len + 1) * 2
+        if self.aug == 0:
+            return (len(self.data_x) - self.seq_len - self.pred_len + 1)
+
+        if self.aug == 1:
+            return (len(self.data_x) - self.seq_len - self.pred_len + 1) * 2
 
     def inverse_transform(self, data):
         return self.scaler.inverse_transform(data)
