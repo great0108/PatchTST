@@ -6,8 +6,6 @@ import torch
 # flatten head -> channel mix
 # add std input
 
-L = 5
-a = torch.arange(L).repeat(L,1)
-mask = torch.abs(torch.arange(L).reshape(-1, 1) - a) > 1
-
-print(mask)
+a = np.repeat(np.expand_dims(np.arange(4), 0), 4, axis=0)
+print(a)
+print(np.expand_dims(np.arange(4), 0))
