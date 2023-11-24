@@ -7,7 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import StandardScaler
 from utils.timefeatures import time_features
 import warnings
-from data_provider.data_augment import distance_normal_aug, normal_aug, slope_aug
+from data_provider.data_augment import distance_normal_aug, distance_std_aug, normal_aug, slope_aug
 
 warnings.filterwarnings('ignore')
 
@@ -82,6 +82,7 @@ class Dataset_ETT_hour(Dataset):
         self.data_stamp = data_stamp
 
     def __getitem__(self, index):
+        idx = index
         if self.aug > 0:
             index //= 2
         
@@ -95,12 +96,13 @@ class Dataset_ETT_hour(Dataset):
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
         
-        if self.aug == 1:
-            seq_x = distance_normal_aug(seq_x)
-        elif self.aug == 2:
-            seq_x = normal_aug(seq_x)
-        elif self.aug == 3:
-            seq_x = slope_aug(seq_x)
+        if idx % 2 == 1:
+            if self.aug == 1:
+                seq_x = distance_normal_aug(seq_x)
+            elif self.aug == 2:
+                seq_x = normal_aug(seq_x)
+            elif self.aug == 3:
+                seq_x = slope_aug(seq_x)
             
         return seq_x, seq_y, seq_x_mark, seq_y_mark
 
