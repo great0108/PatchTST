@@ -1,10 +1,11 @@
 import numpy as np
 import torch
 
-# instance norm
-# mae loss
-# flatten head -> channel mix
-# add std input
+# instance norm - done
+# mae loss - done
+# various aug - done
+# flatten head or first project -> channel mix
+# add std input - done
 # seg transformer -> view range increase etc 2,4,8,...
 
 a = np.array([[1,2], [1,2]])
