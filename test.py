@@ -6,6 +6,7 @@ import torch
 # various aug - done
 # flatten head or first project -> channel mix
 # add std input - done
+# seg transformer -> view range increase etc 2,4,8,...
 
 a = np.array([[1,2], [1,2]])
 print(np.stack(

@@ -25,7 +25,7 @@ class PatchTST_backbone(nn.Module):
         
         super().__init__()
         
-        # RevIn
+        # RevI__
         self.revin = revin
         if self.revin: self.revin_layer = RevIN(c_in, affine=affine, subtract_last=subtract_last)
         
@@ -46,7 +46,10 @@ class PatchTST_backbone(nn.Module):
                                 pe=pe, learn_pe=learn_pe, verbose=verbose, feature_mix=feature_mix, mask_kernel_ratio=mask_kernel_ratio, **kwargs)
 
         # Head
-        self.head_nf = d_model * patch_num
+        if add_std:
+            self.head_nf = (d_model+1) * patch_num
+        else:
+            self.head_nf = (d_model+1) * patch_num
         self.n_vars = c_in
         self.pretrain_head = pretrain_head
         self.head_type = head_type
@@ -56,7 +59,7 @@ class PatchTST_backbone(nn.Module):
         if self.pretrain_head: 
             self.head = self.create_pretrain_head(self.head_nf, c_in, fc_dropout) # custom head passed as a partial func with all its kwargs
         elif head_type == 'flatten': 
-            self.head = Flatten_Head(self.individual, self.n_vars, self.head_nf, target_window, head_dropout=head_dropout, add_std=add_std)
+            self.head = Flatten_Head(self.individual, self.n_vars, self.head_nf, target_window, head_dropout=head_dropout)
         
     
     def forward(self, z):                                                                   # z: [bs x nvars x seq_len]
@@ -76,7 +79,9 @@ class PatchTST_backbone(nn.Module):
         z = self.backbone(z)                                                                # z: [bs x nvars x d_model x patch_num]
 
         if self.revin and self.add_std:
-            z = np.concatenate([z, np.full((z.shape[0], z.shape[1], 1), self.revin_layer.stdev)], axis=2)
+            stdev = self.revin_layer.stdev.permute(0, 2, 1)
+            stdev = stdev.unsqueeze(3).expand(-1, -1, 1, z.shape[3])
+            z = torch.cat([z, stdev], dim=2)
 
         z = self.head(z)                                                                    # z: [bs x nvars x target_window] 
         
@@ -94,13 +99,11 @@ class PatchTST_backbone(nn.Module):
 
 
 class Flatten_Head(nn.Module):
-    def __init__(self, individual, n_vars, nf, target_window, head_dropout=0, add_std=False):
+    def __init__(self, individual, n_vars, nf, target_window, head_dropout=0):
         super().__init__()
         
         self.individual = individual
         self.n_vars = n_vars
-        if add_std:
-            target_window += 1
         
         if self.individual:
             self.linears = nn.ModuleList()

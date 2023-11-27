@@ -36,7 +36,10 @@ class Dataset_ETT_hour(Dataset):
         self.scale = scale
         self.timeenc = timeenc
         self.freq = freq
-        self.aug = aug
+        if flag == "train":
+            self.aug = aug
+        else:
+            self.aug = 0
 
         self.root_path = root_path
         self.data_path = data_path
@@ -98,7 +101,7 @@ class Dataset_ETT_hour(Dataset):
         
         if idx % 2 == 1:
             if self.aug == 1:
-                seq_x = distance_normal_aug(seq_x)
+                seq_x = distance_std_aug(seq_x)
             elif self.aug == 2:
                 seq_x = normal_aug(seq_x)
             elif self.aug == 3:
@@ -109,8 +112,7 @@ class Dataset_ETT_hour(Dataset):
     def __len__(self):
         if self.aug == 0:
             return (len(self.data_x) - self.seq_len - self.pred_len + 1)
-
-        if self.aug == 1:
+        else:
             return (len(self.data_x) - self.seq_len - self.pred_len + 1) * 2
 
     def inverse_transform(self, data):
