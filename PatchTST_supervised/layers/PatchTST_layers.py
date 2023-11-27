@@ -104,7 +104,7 @@ def positional_encoding(pe, learn_pe, q_len, d_model):
         nn.init.uniform_(W_pos, -0.02, 0.02)
     elif pe == 'zeros':
         W_pos = torch.empty((q_len, d_model))
-        nn.init.uniform_(W_pos, -0.02, 0.02)
+        nn.init.uniform_(W_pos, -0.2, 0.2)
     elif pe == 'normal' or pe == 'gauss':
         W_pos = torch.zeros((q_len, 1))
         torch.nn.init.normal_(W_pos, mean=0.0, std=0.1)
