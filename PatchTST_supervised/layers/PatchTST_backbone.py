@@ -21,7 +21,7 @@ class PatchTST_backbone(nn.Module):
                  padding_var:Optional[int]=None, attn_mask:Optional[Tensor]=None, res_attention:bool=True, pre_norm:bool=False, store_attn:bool=False,
                  pe:str='zeros', learn_pe:bool=True, fc_dropout:float=0., head_dropout = 0, padding_patch = None,
                  pretrain_head:bool=False, head_type = 'flatten', individual = False, revin = True, affine = True, subtract_last = False,
-                 verbose:bool=False, feature_mix=True, mask_kernel_ratio=1, add_std=False, **kwargs):
+                 verbose:bool=False, feature_mix=0, mask_kernel_ratio=1, add_std=False, **kwargs):
         
         super().__init__()
         
@@ -59,7 +59,7 @@ class PatchTST_backbone(nn.Module):
         if self.pretrain_head: 
             self.head = self.create_pretrain_head(self.head_nf, c_in, fc_dropout) # custom head passed as a partial func with all its kwargs
         elif head_type == 'flatten': 
-            self.head = Flatten_Head(self.individual, self.n_vars, self.head_nf, target_window, head_dropout=head_dropout)
+            self.head = Flatten_Head(self.individual, self.n_vars, self.head_nf, target_window, head_dropout=head_dropout, feature_mix=feature_mix, activation=act)
         
     
     def forward(self, z):                                                                   # z: [bs x nvars x seq_len]
@@ -99,11 +99,12 @@ class PatchTST_backbone(nn.Module):
 
 
 class Flatten_Head(nn.Module):
-    def __init__(self, individual, n_vars, nf, target_window, head_dropout=0):
+    def __init__(self, individual, n_vars, nf, target_window, head_dropout=0, feature_mix=0, activation="gelu"):
         super().__init__()
         
         self.individual = individual
         self.n_vars = n_vars
+        self.feature_mix = feature_mix
         
         if self.individual:
             self.linears = nn.ModuleList()
@@ -117,6 +118,10 @@ class Flatten_Head(nn.Module):
             self.flatten = nn.Flatten(start_dim=-2)
             self.linear = nn.Linear(nf, target_window)
             self.dropout = nn.Dropout(head_dropout)
+            if feature_mix == 2:
+                self.time_linear = nn.Sequential(nn.Linear(nf, 512), get_activation_fn(activation), nn.Dropout(head_dropout))
+                self.feature_linear = nn.Sequential(nn.Linear(n_vars, n_vars), get_activation_fn(activation), nn.Dropout(head_dropout))
+                self.linear = nn.Linear(512, target_window)
             
     def forward(self, x):                                 # x: [bs x nvars x d_model x patch_num]
         if self.individual:
@@ -128,9 +133,21 @@ class Flatten_Head(nn.Module):
                 x_out.append(z)
             x = torch.stack(x_out, dim=1)                 # x: [bs x nvars x target_window]
         else:
-            x = self.flatten(x)
-            x = self.linear(x)
-            x = self.dropout(x)
+            if self.feature_mix == 2:
+                x = self.flatten(x)                       # x: [bs x nvars x d_model * patch_num]
+                x = self.time_linear(x)                   # x: [bs x nvars x 512]
+
+                x2 = x.permute(0, 2, 1)                   
+                x2 = self.feature_linear(x2)              
+                x2 = x2.permute(0, 2, 1)                  # x2: [bs x nvars x 512]
+
+                x = x + x2
+                x = self.linear(x)
+                # x = self.dropout(x)
+            else:
+                x = self.flatten(x)
+                x = self.linear(x)
+                # x = self.dropout(x)
         return x
         
         
@@ -297,7 +314,7 @@ class TSTEncoderLayer(nn.Module):
         if not self.pre_norm:
             src = self.norm_ffn(src)
 
-        if self.feature_mix:
+        if self.feature_mix == 1:
             src2 = torch.reshape(src, (-1, self.c_in, src.shape[-2], src.shape[-1]))      # [bs x nvars x patch_num X d_model]
             src2 = self.feature_ff(src2)                                                  
             src2 = torch.reshape(src2, (-1, src.shape[-2], src.shape[-1]))                # [bs * nvars x patch_num X d_model]
