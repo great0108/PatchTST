@@ -21,7 +21,7 @@ class PatchTST_backbone(nn.Module):
                  padding_var:Optional[int]=None, attn_mask:Optional[Tensor]=None, res_attention:bool=True, pre_norm:bool=False, store_attn:bool=False,
                  pe:str='zeros', learn_pe:bool=True, fc_dropout:float=0., head_dropout = 0, padding_patch = None,
                  pretrain_head:bool=False, head_type = 'flatten', individual = False, revin = True, affine = True, subtract_last = False,
-                 verbose:bool=False, feature_mix=0, mask_kernel_ratio=1, add_std=False, **kwargs):
+                 verbose:bool=False, feature_mix=0, mask_kernel_ratio=1, reducing_kernel=False, add_std=False, **kwargs):
         
         super().__init__()
         
@@ -43,7 +43,7 @@ class PatchTST_backbone(nn.Module):
                                 n_layers=n_layers, d_model=d_model, n_heads=n_heads, d_k=d_k, d_v=d_v, d_ff=d_ff,
                                 attn_dropout=attn_dropout, dropout=dropout, act=act, key_padding_mask=key_padding_mask, padding_var=padding_var,
                                 attn_mask=attn_mask, res_attention=res_attention, pre_norm=pre_norm, store_attn=store_attn,
-                                pe=pe, learn_pe=learn_pe, verbose=verbose, feature_mix=feature_mix, mask_kernel_ratio=mask_kernel_ratio, **kwargs)
+                                pe=pe, learn_pe=learn_pe, verbose=verbose, feature_mix=feature_mix, mask_kernel_ratio=mask_kernel_ratio, reducing_kernel=reducing_kernel, **kwargs)
 
         # Head
         if add_std:
@@ -158,7 +158,7 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
                  n_layers=3, d_model=128, n_heads=16, d_k=None, d_v=None,
                  d_ff=256, norm='BatchNorm', attn_dropout=0., dropout=0., act="gelu", store_attn=False,
                  key_padding_mask='auto', padding_var=None, attn_mask=None, res_attention=True, pre_norm=False,
-                 pe='zeros', learn_pe=True, verbose=False, feature_mix=True, mask_kernel_ratio=1, **kwargs):
+                 pe='zeros', learn_pe=True, verbose=False, feature_mix=True, mask_kernel_ratio=1, reducing_kernel=False, **kwargs):
         
         
         super().__init__()
@@ -180,7 +180,7 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
         # Encoder
         self.encoder = TSTEncoder(q_len, d_model, n_heads, d_k=d_k, d_v=d_v, d_ff=d_ff, norm=norm, attn_dropout=attn_dropout, dropout=dropout,
                                    pre_norm=pre_norm, activation=act, res_attention=res_attention, n_layers=n_layers, store_attn=store_attn, 
-                                   feature_mix=feature_mix, c_in=c_in, mask_kernel_ratio=mask_kernel_ratio)
+                                   feature_mix=feature_mix, c_in=c_in, mask_kernel_ratio=mask_kernel_ratio, reducing_kernel=reducing_kernel)
 
         
     def forward(self, x) -> Tensor:                                              # x: [bs x nvars x patch_len x patch_num]
@@ -206,13 +206,14 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
 class TSTEncoder(nn.Module):
     def __init__(self, q_len, d_model, n_heads, d_k=None, d_v=None, d_ff=None, 
                         norm='BatchNorm', attn_dropout=0., dropout=0., activation='gelu',
-                        res_attention=False, n_layers=1, pre_norm=False, store_attn=False, feature_mix=True, c_in=None, mask_kernel_ratio=1):
+                        res_attention=False, n_layers=1, pre_norm=False, store_attn=False, feature_mix=True, c_in=None, mask_kernel_ratio=1, reducing_kernel=False):
         super().__init__()
 
         self.layers = nn.ModuleList([TSTEncoderLayer(q_len, d_model, n_heads=n_heads, d_k=d_k, d_v=d_v, d_ff=d_ff, norm=norm,
                                                       attn_dropout=attn_dropout, dropout=dropout,
                                                       activation=activation, res_attention=res_attention,
-                                                      pre_norm=pre_norm, store_attn=store_attn, feature_mix=feature_mix, c_in=c_in, mask_kernel_ratio=mask_kernel_ratio) for i in range(n_layers)])
+                                                      pre_norm=pre_norm, store_attn=store_attn, feature_mix=feature_mix, c_in=c_in,
+                                                      mask_kernel_ratio=(mask_kernel_ratio**(n_layers-i) if reducing_kernel else mask_kernel_ratio)) for i in range(n_layers)])
         self.res_attention = res_attention
 
     def forward(self, src:Tensor, key_padding_mask:Optional[Tensor]=None, attn_mask:Optional[Tensor]=None):
