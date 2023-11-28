@@ -39,8 +39,8 @@ if __name__ == '__main__':
     #parser.add_argument('--individual', action='store_true', default=False, help='DLinear: a linear layer for each variate(channel) individually')
 
     # PatchTST
-    parser.add_argument('--fc_dropout', type=float, default=0.05, help='fully connected dropout')
-    parser.add_argument('--head_dropout', type=float, default=0.0, help='head dropout')
+    parser.add_argument('--fc_dropout', type=float, default=0.3, help='fully connected dropout')
+    parser.add_argument('--head_dropout', type=float, default=0.3, help='head dropout')
     parser.add_argument('--patch_len', type=int, default=16, help='patch length')
     parser.add_argument('--stride', type=int, default=8, help='stride')
     parser.add_argument('--padding_patch', default='end', help='None: None; end: padding on the end')
@@ -50,28 +50,28 @@ if __name__ == '__main__':
     parser.add_argument('--decomposition', type=int, default=0, help='decomposition; True 1 False 0')
     parser.add_argument('--kernel_size', type=int, default=25, help='decomposition-kernel')
     parser.add_argument('--individual', type=int, default=0, help='individual head; True 1 False 0')
-    parser.add_argument('--feature_mix', type=int, default=2, help='feature_mix; 0: no feature_mix 1: transformer feature_mix 2: head feature_mix')
-    parser.add_argument('--kernel_ratio', type=float, default=0.5, help='kernel range; 1: all range 0: one range')
-    parser.add_argument('--reducing_kernel', type=int, default=1, help='reducing kernel; True 1 False 0')
+    parser.add_argument('--feature_mix', type=int, default=0, help='feature_mix; 0: no feature_mix 1: transformer feature_mix 2: head feature_mix')
+    parser.add_argument('--kernel_ratio', type=float, default=1, help='kernel range; 1: all range 0: one range')
+    parser.add_argument('--reducing_kernel', type=int, default=0, help='reducing kernel; True 1 False 0')
     parser.add_argument('--norm', type=str, default="BatchNorm", help='norm name, options: [BatchNorm, LayerNorm, InstanceNorm]')  # why instancenorm == batchnorm?
-    parser.add_argument('--add_std', type=int, default=1, help='add std in head input; True 1 False 0')
+    parser.add_argument('--add_std', type=int, default=0, help='add std in head input; True 1 False 0')
 
     # Formers 
     parser.add_argument('--embed_type', type=int, default=0, help='0: default 1: value embedding + temporal embedding + positional embedding 2: value embedding + temporal embedding 3: value embedding + positional embedding 4: value embedding')
     parser.add_argument('--enc_in', type=int, default=7, help='encoder input size') # DLinear with --individual, use this hyperparameter as the number of channels
     parser.add_argument('--dec_in', type=int, default=7, help='decoder input size')
     parser.add_argument('--c_out', type=int, default=7, help='output size')
-    parser.add_argument('--d_model', type=int, default=512, help='dimension of model')
+    parser.add_argument('--d_model', type=int, default=64, help='dimension of model')
     parser.add_argument('--n_heads', type=int, default=8, help='num of heads')
-    parser.add_argument('--e_layers', type=int, default=2, help='num of encoder layers')
+    parser.add_argument('--e_layers', type=int, default=3, help='num of encoder layers')
     parser.add_argument('--d_layers', type=int, default=1, help='num of decoder layers')
-    parser.add_argument('--d_ff', type=int, default=2048, help='dimension of fcn')
+    parser.add_argument('--d_ff', type=int, default=512, help='dimension of fcn')
     parser.add_argument('--moving_avg', type=int, default=25, help='window size of moving average')
     parser.add_argument('--factor', type=int, default=1, help='attn factor')
     parser.add_argument('--distil', action='store_false',
                         help='whether to use distilling in encoder, using this argument means not using distilling',
                         default=True)
-    parser.add_argument('--dropout', type=float, default=0.05, help='dropout')
+    parser.add_argument('--dropout', type=float, default=0.3, help='dropout')
     parser.add_argument('--embed', type=str, default='timeF',
                         help='time features encoding, options:[timeF, fixed, learned]')
     parser.add_argument('--activation', type=str, default='gelu', help='activation')
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     parser.add_argument('--use_amp', action='store_true', help='use automatic mixed precision training', default=False)
 
     # GPU
-    parser.add_argument('--use_gpu', type=bool, default=False, help='use gpu')
+    parser.add_argument('--use_gpu', type=bool, default=True, help='use gpu')
     parser.add_argument('--gpu', type=int, default=0, help='gpu')
     parser.add_argument('--use_multi_gpu', action='store_true', help='use multiple gpus', default=False)
     parser.add_argument('--devices', type=str, default='0,1,2,3', help='device ids of multile gpus')

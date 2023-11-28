@@ -4,9 +4,11 @@ import torch
 # instance norm - done
 # mae loss - done
 # various aug - done
-# flatten head or first project -> channel mix
+# flatten head or first project -> channel mix - done
 # add std input - done
-# seg transformer -> view range increase etc 2,4,8,...
+# seg transformer -> view range increase etc 2,4,8,... - done
+# reconstruction task
+# without pos encoding
 
 a = np.array([[1,2], [1,2]])
 print(np.stack(

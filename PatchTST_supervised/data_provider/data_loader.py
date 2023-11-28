@@ -101,7 +101,7 @@ class Dataset_ETT_hour(Dataset):
         
         if idx % 2 == 1:
             if self.aug == 1:
-                seq_x = distance_std_aug(seq_x)
+                seq_x = distance_normal_aug(seq_x)
             elif self.aug == 2:
                 seq_x = normal_aug(seq_x)
             elif self.aug == 3:
