@@ -70,8 +70,14 @@ class PatchTST_backbone(nn.Module):
             z = z.permute(0,2,1)
             
         # do patching
-        if self.padding_patch == 'end':
-            z = self.padding_patch_layer(z)
+        if self.cluster:
+            self.data = []
+            self.cluster_labels
+        else:
+            if self.padding_patch == 'end':
+                z = self.padding_patch_layer(z)
+
+        
         z = z.unfold(dimension=-1, size=self.patch_len, step=self.stride)                   # z: [bs x nvars x patch_num x patch_len]
         z = z.permute(0,1,3,2)                                                              # z: [bs x nvars x patch_len x patch_num]
         
@@ -120,7 +126,10 @@ class Flatten_Head(nn.Module):
             self.dropout = nn.Dropout(head_dropout)
             if feature_mix == 2:
                 self.time_linear = nn.Sequential(nn.Linear(nf, d_ff), get_activation_fn(activation), nn.Dropout(head_dropout))
-                self.feature_linear = nn.Sequential(nn.Linear(n_vars, n_vars), get_activation_fn(activation), nn.Dropout(head_dropout))
+                self.feature_linear = nn.Sequential(nn.Linear(n_vars, n_vars*8),
+                                                    get_activation_fn(activation),
+                                                    nn.Dropout(head_dropout),
+                                                    nn.Linear(n_vars*8, n_vars))
                 self.linear = nn.Linear(d_ff, target_window)
             
     def forward(self, x):                                 # x: [bs x nvars x d_model x patch_num]
@@ -135,11 +144,11 @@ class Flatten_Head(nn.Module):
         else:
             if self.feature_mix == 2:
                 x = self.flatten(x)                       # x: [bs x nvars x d_model * patch_num]
-                x = self.time_linear(x)                   # x: [bs x nvars x 512]
+                x = self.time_linear(x)                   # x: [bs x nvars x d_ff]
 
                 x2 = x.permute(0, 2, 1)                   
                 x2 = self.feature_linear(x2)              
-                x2 = x2.permute(0, 2, 1)                  # x2: [bs x nvars x 512]
+                x2 = x2.permute(0, 2, 1)                  # x2: [bs x nvars x d_ff]
 
                 x = x + x2
                 x = self.linear(x)
