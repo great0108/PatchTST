@@ -4,7 +4,7 @@ import torch
 # instance norm - done
 # mae loss - done
 # various aug - done
-# flatten head or first project -> channel mix - done
+# flatten head or first project layer -> channel mix - done
 # add std input - done
 # seg transformer -> view range increase etc 2,4,8,... - done
 # reconstruction task
