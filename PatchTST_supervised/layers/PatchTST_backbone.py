@@ -59,7 +59,7 @@ class PatchTST_backbone(nn.Module):
         if self.pretrain_head: 
             self.head = self.create_pretrain_head(self.head_nf, c_in, fc_dropout) # custom head passed as a partial func with all its kwargs
         elif head_type == 'flatten': 
-            self.head = Flatten_Head(self.individual, self.n_vars, self.head_nf, target_window, head_dropout=head_dropout, feature_mix=feature_mix, activation=act)
+            self.head = Flatten_Head(self.individual, self.n_vars, self.head_nf, target_window, d_ff=d_ff, head_dropout=head_dropout, feature_mix=feature_mix, activation=act)
         
     
     def forward(self, z):                                                                   # z: [bs x nvars x seq_len]
@@ -99,7 +99,7 @@ class PatchTST_backbone(nn.Module):
 
 
 class Flatten_Head(nn.Module):
-    def __init__(self, individual, n_vars, nf, target_window, head_dropout=0, feature_mix=0, activation="gelu"):
+    def __init__(self, individual, n_vars, nf, target_window, d_ff=128, head_dropout=0, feature_mix=0, activation="gelu"):
         super().__init__()
         
         self.individual = individual
@@ -119,9 +119,9 @@ class Flatten_Head(nn.Module):
             self.linear = nn.Linear(nf, target_window)
             self.dropout = nn.Dropout(head_dropout)
             if feature_mix == 2:
-                self.time_linear = nn.Sequential(nn.Linear(nf, 512), get_activation_fn(activation), nn.Dropout(head_dropout))
+                self.time_linear = nn.Sequential(nn.Linear(nf, d_ff), get_activation_fn(activation), nn.Dropout(head_dropout))
                 self.feature_linear = nn.Sequential(nn.Linear(n_vars, n_vars), get_activation_fn(activation), nn.Dropout(head_dropout))
-                self.linear = nn.Linear(512, target_window)
+                self.linear = nn.Linear(d_ff, target_window)
             
     def forward(self, x):                                 # x: [bs x nvars x d_model x patch_num]
         if self.individual:
@@ -213,7 +213,7 @@ class TSTEncoder(nn.Module):
                                                       attn_dropout=attn_dropout, dropout=dropout,
                                                       activation=activation, res_attention=res_attention,
                                                       pre_norm=pre_norm, store_attn=store_attn, feature_mix=feature_mix, c_in=c_in,
-                                                      mask_kernel_ratio=(mask_kernel_ratio**(n_layers-i) if reducing_kernel else mask_kernel_ratio)) for i in range(n_layers)])
+                                                      mask_kernel_ratio=(0.5**(i) if reducing_kernel else mask_kernel_ratio)) for i in range(n_layers)])
         self.res_attention = res_attention
 
     def forward(self, src:Tensor, key_padding_mask:Optional[Tensor]=None, attn_mask:Optional[Tensor]=None):
@@ -268,7 +268,7 @@ class TSTEncoderLayer(nn.Module):
         self.feature_ff = nn.Sequential(Transpose(1,3),
                                 nn.Linear(c_in, d_ff, bias=bias),
                                 get_activation_fn(activation),
-                                nn.Dropout(dropout),
+                                # nn.Dropout(dropout),
                                 nn.Linear(d_ff, c_in, bias=bias),
                                 Transpose(1,3))
         
@@ -290,14 +290,16 @@ class TSTEncoderLayer(nn.Module):
 
     def forward(self, src:Tensor, prev:Optional[Tensor]=None, key_padding_mask:Optional[Tensor]=None, attn_mask:Optional[Tensor]=None) -> Tensor:
 
+        if attn_mask == None:
+            attn_mask = self.mask.mask
         # Multi-Head attention sublayer
         if self.pre_norm:
             src = self.norm_attn(src)
         ## Multi-Head attention
         if self.res_attention:
-            src2, attn, scores = self.self_attn(src, src, src, prev, key_padding_mask=key_padding_mask, attn_mask=self.mask.mask)
+            src2, attn, scores = self.self_attn(src, src, src, prev, key_padding_mask=key_padding_mask, attn_mask=attn_mask)
         else:
-            src2, attn = self.self_attn(src, src, src, key_padding_mask=key_padding_mask, attn_mask=self.mask.mask)
+            src2, attn = self.self_attn(src, src, src, key_padding_mask=key_padding_mask, attn_mask=attn_mask)
         if self.store_attn:
             self.attn = attn
         ## Add & Norm
@@ -320,7 +322,7 @@ class TSTEncoderLayer(nn.Module):
             src2 = self.feature_ff(src2)                                                  
             src2 = torch.reshape(src2, (-1, src.shape[-2], src.shape[-1]))                # [bs * nvars x patch_num X d_model]
             src2 = self.norm_feature(src2)
-            src = src + self.dropout_feature(src2)
+            src = src + src2
 
         if self.res_attention:
             return src, scores

@@ -185,8 +185,62 @@ test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df512_fc1_ebtimeF_dtTrue
 mse:0.37735506892204285, mae:0.3946716785430908, rse:0.5824927687644958
 
 test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df512_fc1_ebtimeF_dtTrue_test_0  
-mse:0.37368887662887573, mae:0.3940277695655823, rse:0.5796562433242798
+mse:0.38099029660224915, mae:0.396273672580719, rse:0.5852917432785034
 
 test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df512_fc1_ebtimeF_dtTrue_test_1  
-mse:0.3744235336780548, mae:0.39447781443595886, rse:0.5802257657051086
+mse:0.3798862397670746, mae:0.3955979347229004, rse:0.5844430923461914
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df512_fc1_ebtimeF_dtTrue_test_0  
+mse:0.3792266547679901, mae:0.39562156796455383, rse:0.5839354395866394
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df512_fc1_ebtimeF_dtTrue_test_1  
+mse:0.37841030955314636, mae:0.39488890767097473, rse:0.583306610584259
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df512_fc1_ebtimeF_dtTrue_test_0  
+mse:0.3759836256504059, mae:0.3939126431941986, rse:0.5814332962036133
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df512_fc1_ebtimeF_dtTrue_test_1  
+mse:0.37612780928611755, mae:0.39423468708992004, rse:0.5815447568893433
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df512_fc1_ebtimeF_dtTrue_test_0  
+mse:0.3867378532886505, mae:0.4039019048213959, rse:0.5896899700164795
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df512_fc1_ebtimeF_dtTrue_test_1  
+mse:0.3893490135669708, mae:0.40824824571609497, rse:0.5916774272918701
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df512_fc1_ebtimeF_dtTrue_test_0  
+mse:0.39194414019584656, mae:0.41128218173980713, rse:0.5936459898948669
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df512_fc1_ebtimeF_dtTrue_test_1  
+mse:0.39483946561813354, mae:0.4118961691856384, rse:0.5958346128463745
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df32_fc1_ebtimeF_dtTrue_test_0  
+mse:0.3903864622116089, mae:0.41033583879470825, rse:0.5924651622772217
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df32_fc1_ebtimeF_dtTrue_test_1  
+mse:0.38454899191856384, mae:0.4040774405002594, rse:0.5880188941955566
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df32_fc1_ebtimeF_dtTrue_test_0  
+mse:0.384255588054657, mae:0.40352463722229004, rse:0.5877945423126221
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df32_fc1_ebtimeF_dtTrue_test_1  
+mse:0.38974452018737793, mae:0.408225953578949, rse:0.5919778347015381
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df32_fc1_ebtimeF_dtTrue_test_0  
+mse:0.37663739919662476, mae:0.394555926322937, rse:0.5819385647773743
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df32_fc1_ebtimeF_dtTrue_test_1  
+mse:0.3754104673862457, mae:0.39283865690231323, rse:0.5809899568557739
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df32_fc1_ebtimeF_dtTrue_test_0  
+mse:0.37654733657836914, mae:0.4036547839641571, rse:0.5818690061569214
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df32_fc1_ebtimeF_dtTrue_test_1  
+mse:0.3715899884700775, mae:0.399075984954834, rse:0.5780260562896729
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df128_fc1_ebtimeF_dtTrue_test_0  
+mse:0.37399253249168396, mae:0.401213139295578, rse:0.5798916816711426
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df128_fc1_ebtimeF_dtTrue_test_1  
+mse:0.381818562746048, mae:0.403009831905365, rse:0.5859276056289673
 

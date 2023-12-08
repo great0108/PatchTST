@@ -27,7 +27,7 @@ if __name__ == '__main__':
     parser.add_argument('--freq', type=str, default='h',
                         help='freq for time features encoding, options:[s:secondly, t:minutely, h:hourly, d:daily, b:business days, w:weekly, m:monthly], you can also use more detailed freq like 15min or 3h')
     parser.add_argument('--checkpoints', type=str, default='./checkpoints/', help='location of model checkpoints')
-    parser.add_argument('--aug', type=int, default=1, help='0: no aug 1: distance aug 2: normal aug 3: slope aug')  # slope aug = positional encoding?
+    parser.add_argument('--aug', type=int, default=0, help='0: no aug 1: distance aug 2: normal aug 3: slope aug')  # slope aug = positional encoding? no
 
     # forecasting task
     parser.add_argument('--seq_len', type=int, default=96, help='input sequence length')
@@ -39,8 +39,8 @@ if __name__ == '__main__':
     #parser.add_argument('--individual', action='store_true', default=False, help='DLinear: a linear layer for each variate(channel) individually')
 
     # PatchTST
-    parser.add_argument('--fc_dropout', type=float, default=0.3, help='fully connected dropout')
-    parser.add_argument('--head_dropout', type=float, default=0.3, help='head dropout')
+    parser.add_argument('--fc_dropout', type=float, default=0.2, help='fully connected dropout')
+    parser.add_argument('--head_dropout', type=float, default=0.2, help='head dropout')
     parser.add_argument('--patch_len', type=int, default=16, help='patch length')
     parser.add_argument('--stride', type=int, default=8, help='stride')
     parser.add_argument('--padding_patch', default='end', help='None: None; end: padding on the end')
@@ -65,7 +65,8 @@ if __name__ == '__main__':
     parser.add_argument('--n_heads', type=int, default=8, help='num of heads')
     parser.add_argument('--e_layers', type=int, default=3, help='num of encoder layers')
     parser.add_argument('--d_layers', type=int, default=1, help='num of decoder layers')
-    parser.add_argument('--d_ff', type=int, default=512, help='dimension of fcn')
+    parser.add_argument('--d_ff', type=int, default=128, help='dimension of fcn')
+
     parser.add_argument('--moving_avg', type=int, default=25, help='window size of moving average')
     parser.add_argument('--factor', type=int, default=1, help='attn factor')
     parser.add_argument('--distil', action='store_false',
