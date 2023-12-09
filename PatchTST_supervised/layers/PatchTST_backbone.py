@@ -120,7 +120,10 @@ class Flatten_Head(nn.Module):
             self.dropout = nn.Dropout(head_dropout)
             if feature_mix == 2:
                 self.time_linear = nn.Sequential(nn.Linear(nf, d_ff), get_activation_fn(activation), nn.Dropout(head_dropout))
-                self.feature_linear = nn.Sequential(nn.Linear(n_vars, n_vars), get_activation_fn(activation), nn.Dropout(head_dropout))
+                self.feature_linear = nn.Sequential(nn.Linear(n_vars, n_vars*8),
+                                                    get_activation_fn(activation),
+                                                    nn.Dropout(head_dropout),
+                                                    nn.Linear(n_vars*8, n_vars))
                 self.linear = nn.Linear(d_ff, target_window)
             
     def forward(self, x):                                 # x: [bs x nvars x d_model x patch_num]

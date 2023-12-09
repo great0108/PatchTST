@@ -50,7 +50,7 @@ if __name__ == '__main__':
     parser.add_argument('--decomposition', type=int, default=0, help='decomposition; True 1 False 0')
     parser.add_argument('--kernel_size', type=int, default=25, help='decomposition-kernel')
     parser.add_argument('--individual', type=int, default=0, help='individual head; True 1 False 0')
-    parser.add_argument('--feature_mix', type=int, default=0, help='feature_mix; 0: no feature_mix 1: transformer feature_mix 2: head feature_mix')
+    parser.add_argument('--feature_mix', type=int, default=2, help='feature_mix; 0: no feature_mix 1: transformer feature_mix 2: head feature_mix')
     parser.add_argument('--kernel_ratio', type=float, default=1, help='kernel range; 1: all range 0: one range')
     parser.add_argument('--reducing_kernel', type=int, default=0, help='reducing kernel; True 1 False 0')
     parser.add_argument('--norm', type=str, default="BatchNorm", help='norm name, options: [BatchNorm, LayerNorm, InstanceNorm]')  # why instancenorm == batchnorm?
