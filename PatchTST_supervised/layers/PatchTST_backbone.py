@@ -21,7 +21,7 @@ class PatchTST_backbone(nn.Module):
                  padding_var:Optional[int]=None, attn_mask:Optional[Tensor]=None, res_attention:bool=True, pre_norm:bool=False, store_attn:bool=False,
                  pe:str='zeros', learn_pe:bool=True, fc_dropout:float=0., head_dropout = 0, padding_patch = None,
                  pretrain_head:bool=False, head_type = 'flatten', individual = False, revin = True, affine = True, subtract_last = False,
-                 verbose:bool=False, feature_mix=0, mask_kernel_ratio=1, reducing_kernel=False, add_std=False, cluster=0, cluster_size=3, orthogonal=0, **kwargs):
+                 verbose:bool=False, feature_mix=0, mask_kernel_ratio=1, reducing_kernel=False, add_std=False, cluster=0, cluster_size=3, orthogonal=0, layer_pos_embed=0, **kwargs):
         
         super().__init__()
         
@@ -44,7 +44,7 @@ class PatchTST_backbone(nn.Module):
                                 attn_dropout=attn_dropout, dropout=dropout, act=act, key_padding_mask=key_padding_mask, padding_var=padding_var,
                                 attn_mask=attn_mask, res_attention=res_attention, pre_norm=pre_norm, store_attn=store_attn,
                                 pe=pe, learn_pe=learn_pe, verbose=verbose, feature_mix=feature_mix, mask_kernel_ratio=mask_kernel_ratio,
-                                reducing_kernel=reducing_kernel, cluster=cluster, cluster_size=cluster_size, **kwargs)
+                                reducing_kernel=reducing_kernel, cluster=cluster, cluster_size=cluster_size, layer_pos_embed=layer_pos_embed, **kwargs)
 
         # Head
         if add_std:
@@ -215,7 +215,7 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
                  n_layers=3, d_model=128, n_heads=16, d_k=None, d_v=None,
                  d_ff=256, norm='BatchNorm', attn_dropout=0., dropout=0., act="gelu", store_attn=False,
                  key_padding_mask='auto', padding_var=None, attn_mask=None, res_attention=True, pre_norm=False,
-                 pe='zeros', learn_pe=True, verbose=False, feature_mix=True, mask_kernel_ratio=1, reducing_kernel=False, cluster=0, cluster_size=3, **kwargs):
+                 pe='zeros', learn_pe=True, verbose=False, feature_mix=True, mask_kernel_ratio=1, reducing_kernel=False, cluster=0, cluster_size=3, layer_pos_embed=0, **kwargs):
         
         
         super().__init__()
@@ -235,6 +235,8 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
 
         # Positional encoding
         self.W_pos = positional_encoding(pe, learn_pe, q_len, d_model)
+        layer_pos_embed = self.W_pos if layer_pos_embed else None
+        self.layer_pos_embed = layer_pos_embed
 
         # Residual dropout
         self.dropout = nn.Dropout(dropout)
@@ -242,7 +244,7 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
         # Encoder
         self.encoder = TSTEncoder(q_len, d_model, n_heads, d_k=d_k, d_v=d_v, d_ff=d_ff, norm=norm, attn_dropout=attn_dropout, dropout=dropout,
                                    pre_norm=pre_norm, activation=act, res_attention=res_attention, n_layers=n_layers, store_attn=store_attn, 
-                                   feature_mix=feature_mix, c_in=c_in, mask_kernel_ratio=mask_kernel_ratio, reducing_kernel=reducing_kernel)
+                                   feature_mix=feature_mix, c_in=c_in, mask_kernel_ratio=mask_kernel_ratio, reducing_kernel=reducing_kernel, layer_pos_embed=layer_pos_embed)
 
         
     def forward(self, x) -> Tensor:                                              # x: [bs x nvars x patch_len x patch_num]
@@ -265,7 +267,10 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
             x = self.W_P(x)                                                      # x: [bs x nvars x patch_num x d_model]
 
         u = torch.reshape(x, (x.shape[0]*x.shape[1],x.shape[2],x.shape[3]))      # u: [bs * nvars x patch_num x d_model]
-        u = self.dropout(u + self.W_pos)                                         # u: [bs * nvars x patch_num x d_model]
+        if self.layer_pos_embed:
+            u = self.dropout(u)
+        else:
+            u = self.dropout(u + self.W_pos)                                     # u: [bs * nvars x patch_num x d_model]
 
         # Encoder
         z = self.encoder(u)                                                      # z: [bs * nvars x patch_num x d_model]
@@ -280,13 +285,13 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
 class TSTEncoder(nn.Module):
     def __init__(self, q_len, d_model, n_heads, d_k=None, d_v=None, d_ff=None, 
                         norm='BatchNorm', attn_dropout=0., dropout=0., activation='gelu',
-                        res_attention=False, n_layers=1, pre_norm=False, store_attn=False, feature_mix=True, c_in=None, mask_kernel_ratio=1, reducing_kernel=False):
+                        res_attention=False, n_layers=1, pre_norm=False, store_attn=False, feature_mix=True, c_in=None, mask_kernel_ratio=1, reducing_kernel=False, layer_pos_embed=None):
         super().__init__()
 
         self.layers = nn.ModuleList([TSTEncoderLayer(q_len, d_model, n_heads=n_heads, d_k=d_k, d_v=d_v, d_ff=d_ff, norm=norm,
                                                       attn_dropout=attn_dropout, dropout=dropout,
                                                       activation=activation, res_attention=res_attention,
-                                                      pre_norm=pre_norm, store_attn=store_attn, feature_mix=feature_mix, c_in=c_in,
+                                                      pre_norm=pre_norm, store_attn=store_attn, feature_mix=feature_mix, c_in=c_in, layer_pos_embed=layer_pos_embed,
                                                       mask_kernel_ratio=(0.5**(i) if reducing_kernel else mask_kernel_ratio)) for i in range(n_layers)])
         self.res_attention = res_attention
 
@@ -304,7 +309,7 @@ class TSTEncoder(nn.Module):
 
 class TSTEncoderLayer(nn.Module):
     def __init__(self, q_len, d_model, n_heads, d_k=None, d_v=None, d_ff=256, store_attn=False,
-                 norm='BatchNorm', attn_dropout=0, dropout=0., bias=True, activation="gelu", res_attention=False, pre_norm=False, feature_mix=True, c_in=None, mask_kernel_ratio=1):
+                 norm='BatchNorm', attn_dropout=0, dropout=0., bias=True, activation="gelu", res_attention=False, pre_norm=False, feature_mix=True, c_in=None, mask_kernel_ratio=1, layer_pos_embed=None):
         super().__init__()
         assert not d_model%n_heads, f"d_model ({d_model}) must be divisible by n_heads ({n_heads})"
         d_k = d_model // n_heads if d_k is None else d_k
@@ -360,12 +365,16 @@ class TSTEncoderLayer(nn.Module):
         self.store_attn = store_attn
         self.c_in = c_in
         self.feature_mix = feature_mix
+        self.layer_pos_embed = layer_pos_embed
 
 
     def forward(self, src:Tensor, prev:Optional[Tensor]=None, key_padding_mask:Optional[Tensor]=None, attn_mask:Optional[Tensor]=None) -> Tensor:
 
         if attn_mask == None:
             attn_mask = self.mask.mask
+
+        if self.layer_pos_embed:
+            src = src + self.layer_pos_embed
         # Multi-Head attention sublayer
         if self.pre_norm:
             src = self.norm_attn(src)
