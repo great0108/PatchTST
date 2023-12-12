@@ -51,7 +51,10 @@ class PatchTST_backbone(nn.Module):
             self.head_nf = (d_model+1) * patch_num
         else:
             self.head_nf = d_model * patch_num
-        self.n_vars = c_in
+        if cluster:
+            self.n_vars = cluster
+        else:
+            self.n_vars = c_in
         self.pretrain_head = pretrain_head
         self.head_type = head_type
         self.individual = individual
@@ -135,17 +138,17 @@ class Flatten_Head(nn.Module):
             self.dropout = nn.Dropout(head_dropout)
 
             if feature_mix == 2:
-                self.time_linear = nn.Sequential(nn.Linear(nf, d_ff),
+                self.time_linear = nn.Sequential(nn.Linear(nf, d_ff*2),
                                                  get_activation_fn(activation),
                                                  nn.Dropout(head_dropout),
-                                                 nn.Linear(d_ff, target_window))
+                                                 nn.Linear(d_ff*2, d_ff))
                 self.feature_linear = nn.Sequential(nn.Linear(n_vars, n_vars*8),
                                                     get_activation_fn(activation),
                                                     nn.Dropout(head_dropout),
                                                     nn.Linear(n_vars*8, n_vars))
                 self.linear = nn.Linear(d_ff, target_window)
 
-            elif cluster:
+            if cluster:
                 self.linears = nn.ModuleList()
                 self.dropouts = nn.ModuleList()
                 self.flattens = nn.ModuleList()
@@ -173,13 +176,12 @@ class Flatten_Head(nn.Module):
                 x2 = x2.permute(0, 2, 1)                  # x2: [bs x nvars x d_ff]
 
                 if self.orthogonal:
-                    reg = torch.sum(torch.abs(x * x2)) / (x.shape[0] * x.shape[1] * x.shape[2])
+                    reg = torch.mean(torch.abs(x * x2))
 
-                # x = x + x2
-                # x = self.linear(x)
-                # x = self.dropout(x)
+                x = x + x2
+                x = x.unsqueeze(-1)
 
-            elif self.cluster:
+            if self.cluster:
                 cluster_labels = torch.tensor([0,0,0,0,0,0,0])
                 cluster_counts = torch.unique(cluster_labels, return_counts=True)[1]
                 order = torch.sort(cluster_labels).indices

@@ -40,7 +40,7 @@ def data_provider(args, flag):
         target=args.target,
         timeenc=timeenc,
         freq=freq,
-        aug=args.aug
+        # aug=args.aug
     )
 
     print(flag, len(data_set))
