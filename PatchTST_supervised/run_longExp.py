@@ -4,8 +4,10 @@ import torch
 from exp.exp_main import Exp_Main
 import random
 import numpy as np
+from multiprocessing import freeze_support
 
 if __name__ == '__main__':
+    freeze_support()
     parser = argparse.ArgumentParser(description='Autoformer & Transformer family for Time Series Forecasting')
 
     # random seed
@@ -55,6 +57,12 @@ if __name__ == '__main__':
     parser.add_argument('--reducing_kernel', type=int, default=0, help='reducing kernel; True 1 False 0')
     parser.add_argument('--norm', type=str, default="BatchNorm", help='norm name, options: [BatchNorm, LayerNorm, InstanceNorm]')  # why instancenorm == batchnorm?
     parser.add_argument('--add_std', type=int, default=0, help='add std in head input; True 1 False 0')
+    parser.add_argument('--cluster', type=int, default=0, help='cluster num; False 0')
+    parser.add_argument('--cluster_size', type=int, default=2, help='cluster size')
+    parser.add_argument('--orthogonal', type=int, default=1, help='orthogonal feature_mix; True 1 False 0')
+    parser.add_argument('--orthogonal_loss', type=float, default=0, help='orthogonal feature_mix loss weight;')
+    parser.add_argument('--layer_pos_embed', type=int, default=0, help='add pos embedding each layer; True 1 False 0')
+
 
     # Formers 
     parser.add_argument('--embed_type', type=int, default=0, help='0: default 1: value embedding + temporal embedding + positional embedding 2: value embedding + temporal embedding 3: value embedding + positional embedding 4: value embedding')
@@ -93,7 +101,7 @@ if __name__ == '__main__':
     parser.add_argument('--use_amp', action='store_true', help='use automatic mixed precision training', default=False)
 
     # GPU
-    parser.add_argument('--use_gpu', type=bool, default=False, help='use gpu')
+    parser.add_argument('--use_gpu', type=bool, default=True, help='use gpu')
     parser.add_argument('--gpu', type=int, default=0, help='gpu')
     parser.add_argument('--use_multi_gpu', action='store_true', help='use multiple gpus', default=False)
     parser.add_argument('--devices', type=str, default='0,1,2,3', help='device ids of multile gpus')

@@ -256,3 +256,39 @@ mse:0.37836411595344543, mae:0.40182986855506897, rse:0.5832710862159729
 test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df128_fc1_ebtimeF_dtTrue_test_1  
 mse:0.37765994668006897, mae:0.40135008096694946, rse:0.5827280282974243
 
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df128_fc1_ebtimeF_dtTrue_test_0  
+mse:0.37522515654563904, mae:0.39329978823661804, rse:0.5808465480804443
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df128_fc1_ebtimeF_dtTrue_test_1  
+mse:0.37628301978111267, mae:0.3941277861595154, rse:0.5816647410392761
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df128_fc1_ebtimeF_dtTrue_test_0  
+mse:0.4793626368045807, mae:0.462817519903183, rse:0.65651935338974
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df128_fc1_ebtimeF_dtTrue_test_1  
+mse:0.4815041124820709, mae:0.46366509795188904, rse:0.6579841375350952
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df128_fc1_ebtimeF_dtTrue_test_0  
+mse:0.3828623294830322, mae:0.3992389738559723, rse:0.5867279171943665
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df128_fc1_ebtimeF_dtTrue_test_1  
+mse:0.3790643513202667, mae:0.3975977897644043, rse:0.5838105082511902
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df128_fc1_ebtimeF_dtTrue_test_0  
+mse:0.38356518745422363, mae:0.39835265278816223, rse:0.5872662663459778
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df128_fc1_ebtimeF_dtTrue_test_1  
+mse:0.3752170205116272, mae:0.3936311900615692, rse:0.5808402299880981
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df128_fc1_ebtimeF_dtTrue_test_0  
+mse:0.3725224733352661, mae:0.3999760150909424, rse:0.5787509083747864
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df128_fc1_ebtimeF_dtTrue_test_1  
+mse:0.3746499717235565, mae:0.39886710047721863, rse:0.5804011821746826
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df128_fc1_ebtimeF_dtTrue_test_0  
+mse:0.3781417906284332, mae:0.39972957968711853, rse:0.5830996036529541
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df128_fc1_ebtimeF_dtTrue_test_1  
+mse:0.37437495589256287, mae:0.39835798740386963, rse:0.5801880955696106
+

@@ -21,7 +21,7 @@ class PatchTST_backbone(nn.Module):
                  padding_var:Optional[int]=None, attn_mask:Optional[Tensor]=None, res_attention:bool=True, pre_norm:bool=False, store_attn:bool=False,
                  pe:str='zeros', learn_pe:bool=True, fc_dropout:float=0., head_dropout = 0, padding_patch = None,
                  pretrain_head:bool=False, head_type = 'flatten', individual = False, revin = True, affine = True, subtract_last = False,
-                 verbose:bool=False, feature_mix=0, mask_kernel_ratio=1, reducing_kernel=False, add_std=False, **kwargs):
+                 verbose:bool=False, feature_mix=0, mask_kernel_ratio=1, reducing_kernel=False, add_std=False, cluster=0, cluster_size=3, orthogonal=0, **kwargs):
         
         super().__init__()
         
@@ -43,7 +43,8 @@ class PatchTST_backbone(nn.Module):
                                 n_layers=n_layers, d_model=d_model, n_heads=n_heads, d_k=d_k, d_v=d_v, d_ff=d_ff,
                                 attn_dropout=attn_dropout, dropout=dropout, act=act, key_padding_mask=key_padding_mask, padding_var=padding_var,
                                 attn_mask=attn_mask, res_attention=res_attention, pre_norm=pre_norm, store_attn=store_attn,
-                                pe=pe, learn_pe=learn_pe, verbose=verbose, feature_mix=feature_mix, mask_kernel_ratio=mask_kernel_ratio, reducing_kernel=reducing_kernel, **kwargs)
+                                pe=pe, learn_pe=learn_pe, verbose=verbose, feature_mix=feature_mix, mask_kernel_ratio=mask_kernel_ratio,
+                                reducing_kernel=reducing_kernel, cluster=cluster, cluster_size=cluster_size, **kwargs)
 
         # Head
         if add_std:
@@ -55,11 +56,13 @@ class PatchTST_backbone(nn.Module):
         self.head_type = head_type
         self.individual = individual
         self.add_std = add_std
+        self.orthogonal = orthogonal
 
         if self.pretrain_head: 
             self.head = self.create_pretrain_head(self.head_nf, c_in, fc_dropout) # custom head passed as a partial func with all its kwargs
         elif head_type == 'flatten': 
-            self.head = Flatten_Head(self.individual, self.n_vars, self.head_nf, target_window, d_ff=d_ff, head_dropout=head_dropout, feature_mix=feature_mix, activation=act)
+            self.head = Flatten_Head(self.individual, self.n_vars, self.head_nf, target_window, d_ff=d_ff, head_dropout=head_dropout, 
+                                    feature_mix=feature_mix, activation=act, cluster=cluster, cluster_size=cluster_size, orthogonal=orthogonal)
         
     
     def forward(self, z):                                                                   # z: [bs x nvars x seq_len]
@@ -70,12 +73,8 @@ class PatchTST_backbone(nn.Module):
             z = z.permute(0,2,1)
             
         # do patching
-        if self.cluster:
-            self.data = []
-            self.cluster_labels
-        else:
-            if self.padding_patch == 'end':
-                z = self.padding_patch_layer(z)
+        if self.padding_patch == 'end':
+            z = self.padding_patch_layer(z)
 
         
         z = z.unfold(dimension=-1, size=self.patch_len, step=self.stride)                   # z: [bs x nvars x patch_num x patch_len]
@@ -89,13 +88,20 @@ class PatchTST_backbone(nn.Module):
             stdev = stdev.unsqueeze(3).expand(-1, -1, 1, z.shape[3])
             z = torch.cat([z, stdev], dim=2)
 
-        z = self.head(z)                                                                    # z: [bs x nvars x target_window] 
+        if self.orthogonal:
+            z, reg = self.head(z)
+        else:
+            z = self.head(z)                                                                # z: [bs x nvars x target_window] 
         
         # denorm
         if self.revin: 
             z = z.permute(0,2,1)
             z = self.revin_layer(z, 'denorm')
             z = z.permute(0,2,1)
+
+        if self.orthogonal:
+            return z, reg
+
         return z
     
     def create_pretrain_head(self, head_nf, vars, dropout):
@@ -105,12 +111,15 @@ class PatchTST_backbone(nn.Module):
 
 
 class Flatten_Head(nn.Module):
-    def __init__(self, individual, n_vars, nf, target_window, d_ff=128, head_dropout=0, feature_mix=0, activation="gelu"):
+    def __init__(self, individual, n_vars, nf, target_window, d_ff=128, head_dropout=0, feature_mix=0, activation="gelu", cluster=0, cluster_size=3, orthogonal=0):
         super().__init__()
         
         self.individual = individual
         self.n_vars = n_vars
         self.feature_mix = feature_mix
+        self.cluster = cluster
+        self.cluster_size = cluster_size
+        self.orthogonal = orthogonal
         
         if self.individual:
             self.linears = nn.ModuleList()
@@ -124,13 +133,26 @@ class Flatten_Head(nn.Module):
             self.flatten = nn.Flatten(start_dim=-2)
             self.linear = nn.Linear(nf, target_window)
             self.dropout = nn.Dropout(head_dropout)
+
             if feature_mix == 2:
-                self.time_linear = nn.Sequential(nn.Linear(nf, d_ff), get_activation_fn(activation), nn.Dropout(head_dropout))
+                self.time_linear = nn.Sequential(nn.Linear(nf, d_ff),
+                                                 get_activation_fn(activation),
+                                                 nn.Dropout(head_dropout),
+                                                 nn.Linear(d_ff, target_window))
                 self.feature_linear = nn.Sequential(nn.Linear(n_vars, n_vars*8),
                                                     get_activation_fn(activation),
                                                     nn.Dropout(head_dropout),
                                                     nn.Linear(n_vars*8, n_vars))
                 self.linear = nn.Linear(d_ff, target_window)
+
+            elif cluster:
+                self.linears = nn.ModuleList()
+                self.dropouts = nn.ModuleList()
+                self.flattens = nn.ModuleList()
+                for i in range(self.cluster_size):
+                    self.flattens.append(nn.Flatten(start_dim=-2))
+                    self.linears.append(nn.Linear(nf, target_window))
+                    self.dropouts.append(nn.Dropout(head_dropout))
             
     def forward(self, x):                                 # x: [bs x nvars x d_model x patch_num]
         if self.individual:
@@ -150,13 +172,37 @@ class Flatten_Head(nn.Module):
                 x2 = self.feature_linear(x2)              
                 x2 = x2.permute(0, 2, 1)                  # x2: [bs x nvars x d_ff]
 
-                x = x + x2
-                x = self.linear(x)
+                if self.orthogonal:
+                    reg = torch.sum(torch.abs(x * x2)) / (x.shape[0] * x.shape[1] * x.shape[2])
+
+                # x = x + x2
+                # x = self.linear(x)
                 # x = self.dropout(x)
+
+            elif self.cluster:
+                cluster_labels = torch.tensor([0,0,0,0,0,0,0])
+                cluster_counts = torch.unique(cluster_labels, return_counts=True)[1]
+                order = torch.sort(cluster_labels).indices
+                order2 = torch.sort(order).indices
+                x_out = []
+                for i in range(self.cluster):
+                    for j in range(self.cluster_size):
+                        z = self.flattens[j](x[:,i,:,:])          # z: [bs x d_model * patch_num]
+                        z = self.linears[j](z)                    # z: [bs x target_window]
+                        # z = self.dropouts[j](z)
+                        if j < cluster_counts[i]:
+                            x_out.append(z)
+                x = torch.stack(x_out, dim=1)                 # x: [bs x nvars x target_window]
+                x = x[:, order2]
+
             else:
                 x = self.flatten(x)
                 x = self.linear(x)
                 # x = self.dropout(x)
+
+        if self.orthogonal:
+            return x, reg
+        
         return x
         
         
@@ -167,17 +213,22 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
                  n_layers=3, d_model=128, n_heads=16, d_k=None, d_v=None,
                  d_ff=256, norm='BatchNorm', attn_dropout=0., dropout=0., act="gelu", store_attn=False,
                  key_padding_mask='auto', padding_var=None, attn_mask=None, res_attention=True, pre_norm=False,
-                 pe='zeros', learn_pe=True, verbose=False, feature_mix=True, mask_kernel_ratio=1, reducing_kernel=False, **kwargs):
+                 pe='zeros', learn_pe=True, verbose=False, feature_mix=True, mask_kernel_ratio=1, reducing_kernel=False, cluster=0, cluster_size=3, **kwargs):
         
         
         super().__init__()
         
         self.patch_num = patch_num
         self.patch_len = patch_len
+        self.cluster = cluster
+        self.cluster_size = cluster_size
         
         # Input encoding
         q_len = patch_num
-        self.W_P = nn.Linear(patch_len, d_model)        # Eq 1: projection of feature vectors onto a d-dim vector space
+        if self.cluster:
+            self.W_P = nn.Linear(patch_len*self.cluster_size, d_model)
+        else:
+            self.W_P = nn.Linear(patch_len, d_model)        # Eq 1: projection of feature vectors onto a d-dim vector space
         self.seq_len = q_len
 
         # Positional encoding
@@ -193,11 +244,23 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
 
         
     def forward(self, x) -> Tensor:                                              # x: [bs x nvars x patch_len x patch_num]
-        
-        n_vars = x.shape[1]
-        # Input encoding
-        x = x.permute(0,1,3,2)                                                   # x: [bs x nvars x patch_num x patch_len]
-        x = self.W_P(x)                                                          # x: [bs x nvars x patch_num x d_model]
+        if self.cluster:
+            cluster_labels = torch.tensor([0,0,0,0,0,0,0])
+            x = x.permute(0, 3, 1, 2)
+            xs = []
+            for i in range(self.cluster):
+                xi = x[:, :, cluster_labels == i]
+                xi = F.pad(xi, (0, 0, 0, self.cluster_size - xi.shape[2]), "constant", 0)    # x: [bs x patch_num x cluster_size x patch_len]
+                xi = torch.reshape(xi, (x.shape[0], x.shape[1], -1))                         # x: [bs x patch_num x cluster_size * patch_len]
+                xi = self.W_P(xi)                                                            # x: [bs x patch_num x d_model]
+                xs.append(xi)
+            x = torch.stack(xs, dim=1)                                                       # x: [bs x cluster_num x patch_num x d_model]
+            n_vars = x.shape[1]
+        else:
+            # Input encoding
+            n_vars = x.shape[1]
+            x = x.permute(0,1,3,2)                                               # x: [bs x nvars x patch_num x patch_len]
+            x = self.W_P(x)                                                      # x: [bs x nvars x patch_num x d_model]
 
         u = torch.reshape(x, (x.shape[0]*x.shape[1],x.shape[2],x.shape[3]))      # u: [bs * nvars x patch_num x d_model]
         u = self.dropout(u + self.W_pos)                                         # u: [bs * nvars x patch_num x d_model]
@@ -289,7 +352,7 @@ class TSTEncoderLayer(nn.Module):
         else:
             self.norm_feature = nn.Sequential(Transpose(1,2), nn.InstanceNorm1d(d_model), Transpose(1,2))
 
-        self.mask = LocalMask(q_len, q_len * mask_kernel_ratio, device="cpu")
+        self.mask = LocalMask(q_len, q_len * mask_kernel_ratio, device="cuda")
 
         self.pre_norm = pre_norm
         self.store_attn = store_attn
@@ -327,9 +390,9 @@ class TSTEncoderLayer(nn.Module):
             src = self.norm_ffn(src)
 
         if self.feature_mix == 1:
-            src2 = torch.reshape(src, (-1, self.c_in, src.shape[-2], src.shape[-1]))      # [bs x nvars x patch_num X d_model]
+            src2 = torch.reshape(src, (-1, self.c_in, src.shape[-2], src.shape[-1]))      # [bs x nvars x patch_num x d_model]
             src2 = self.feature_ff(src2)                                                  
-            src2 = torch.reshape(src2, (-1, src.shape[-2], src.shape[-1]))                # [bs * nvars x patch_num X d_model]
+            src2 = torch.reshape(src2, (-1, src.shape[-2], src.shape[-1]))                # [bs * nvars x patch_num x d_model]
             src2 = self.norm_feature(src2)
             src = src + src2
 
