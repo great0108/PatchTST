@@ -33,6 +33,7 @@ from data_provider.data_loader import Dataset_ETT_hour
 # reconstruction task
 # without pos encoding
 # add pos encoding each tf layer
+# add feature_mix dim param
 
 a = torch.tensor([2, 1, 2, 1, 0, 0, 1])
 b = torch.sort(a)[0]

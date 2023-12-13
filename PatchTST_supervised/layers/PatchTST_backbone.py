@@ -267,7 +267,7 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
             x = self.W_P(x)                                                      # x: [bs x nvars x patch_num x d_model]
 
         u = torch.reshape(x, (x.shape[0]*x.shape[1],x.shape[2],x.shape[3]))      # u: [bs * nvars x patch_num x d_model]
-        if self.layer_pos_embed:
+        if self.layer_pos_embed != None:
             u = self.dropout(u)
         else:
             u = self.dropout(u + self.W_pos)                                     # u: [bs * nvars x patch_num x d_model]
@@ -373,7 +373,7 @@ class TSTEncoderLayer(nn.Module):
         if attn_mask == None:
             attn_mask = self.mask.mask
 
-        if self.layer_pos_embed:
+        if self.layer_pos_embed != None:
             src = src + self.layer_pos_embed
         # Multi-Head attention sublayer
         if self.pre_norm:

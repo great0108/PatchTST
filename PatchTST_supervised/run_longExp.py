@@ -20,9 +20,9 @@ if __name__ == '__main__':
                         help='model name, options: [Autoformer, Informer, Transformer]')
 
     # data loader
-    parser.add_argument('--data', type=str, required=False, default='custom', help='dataset type')
-    parser.add_argument('--root_path', type=str, default='./data/weather/', help='root path of the data file')
-    parser.add_argument('--data_path', type=str, default='weather.csv', help='data file')
+    parser.add_argument('--data', type=str, required=False, default='ETTh1', help='dataset type, options:[ETTh1, ETTh2, ETTm1, ETTm2, custom]')
+    parser.add_argument('--root_path', type=str, default='./data/ETT', help='root path of the data file')
+    parser.add_argument('--data_path', type=str, default='ETTh1.csv', help='data file')
     parser.add_argument('--features', type=str, default='M',
                         help='forecasting task, options:[M, S, MS]; M:multivariate predict multivariate, S:univariate predict univariate, MS:multivariate predict univariate')
     parser.add_argument('--target', type=str, default='OT', help='target feature in S or MS task')
@@ -60,17 +60,17 @@ if __name__ == '__main__':
     parser.add_argument('--cluster', type=int, default=0, help='cluster num; False 0')
     parser.add_argument('--cluster_size', type=int, default=2, help='cluster size')
     parser.add_argument('--orthogonal', type=int, default=1, help='orthogonal feature_mix; True 1 False 0')
-    parser.add_argument('--orthogonal_loss', type=float, default=0.2, help='orthogonal feature_mix loss weight;')
+    parser.add_argument('--orthogonal_loss', type=float, default=2, help='orthogonal feature_mix loss weight;')
     parser.add_argument('--layer_pos_embed', type=int, default=0, help='add pos embedding each layer; True 1 False 0')
 
 
     # Formers 
     parser.add_argument('--embed_type', type=int, default=0, help='0: default 1: value embedding + temporal embedding + positional embedding 2: value embedding + temporal embedding 3: value embedding + positional embedding 4: value embedding')
-    parser.add_argument('--enc_in', type=int, default=21, help='encoder input size') # DLinear with --individual, use this hyperparameter as the number of channels
+    parser.add_argument('--enc_in', type=int, default=7, help='encoder input size') # DLinear with --individual, use this hyperparameter as the number of channels
     parser.add_argument('--dec_in', type=int, default=7, help='decoder input size')
     parser.add_argument('--c_out', type=int, default=7, help='output size')
-    parser.add_argument('--d_model', type=int, default=256, help='dimension of model')
-    parser.add_argument('--n_heads', type=int, default=16, help='num of heads')
+    parser.add_argument('--d_model', type=int, default=64, help='dimension of model')
+    parser.add_argument('--n_heads', type=int, default=8, help='num of heads')
     parser.add_argument('--e_layers', type=int, default=3, help='num of encoder layers')
     parser.add_argument('--d_layers', type=int, default=1, help='num of decoder layers')
     parser.add_argument('--d_ff', type=int, default=256, help='dimension of fcn')
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     parser.add_argument('--patience', type=int, default=10, help='early stopping patience')
     parser.add_argument('--learning_rate', type=float, default=0.0001, help='optimizer learning rate')
     parser.add_argument('--des', type=str, default='test', help='exp description')
-    parser.add_argument('--loss', type=str, default='mae', help='loss function, option: [mse, mae]')
+    parser.add_argument('--loss', type=str, default='mse', help='loss function, option: [mse, mae]')
     parser.add_argument('--lradj', type=str, default='type4', help='adjust learning rate')
     parser.add_argument('--pct_start', type=float, default=0.3, help='pct_start')
     parser.add_argument('--use_amp', action='store_true', help='use automatic mixed precision training', default=False)
