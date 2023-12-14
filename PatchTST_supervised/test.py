@@ -34,6 +34,7 @@ from data_provider.data_loader import Dataset_ETT_hour
 # without pos encoding
 # add pos encoding each tf layer
 # add feature_mix dim param
+# add feature_mix layernorm
 
 a = torch.tensor([2, 1, 2, 1, 0, 0, 1])
 b = torch.sort(a)[0]

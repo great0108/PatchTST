@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     # PatchTST
     parser.add_argument('--fc_dropout', type=float, default=0.2, help='fully connected dropout')
-    parser.add_argument('--head_dropout', type=float, default=0.2, help='head dropout')
+    parser.add_argument('--head_dropout', type=float, default=0.3, help='head dropout')
     parser.add_argument('--patch_len', type=int, default=16, help='patch length')
     parser.add_argument('--stride', type=int, default=8, help='stride')
     parser.add_argument('--padding_patch', default='end', help='None: None; end: padding on the end')
@@ -53,6 +53,7 @@ if __name__ == '__main__':
     parser.add_argument('--kernel_size', type=int, default=25, help='decomposition-kernel')
     parser.add_argument('--individual', type=int, default=0, help='individual head; True 1 False 0')
     parser.add_argument('--feature_mix', type=int, default=2, help='feature_mix; 0: no feature_mix 1: transformer feature_mix 2: head feature_mix')
+    parser.add_argument('--d_mix', type=int, default=512, help='feature_mix dim')
     parser.add_argument('--kernel_ratio', type=float, default=1, help='kernel range; 1: all range 0: one range')
     parser.add_argument('--reducing_kernel', type=int, default=0, help='reducing kernel; True 1 False 0')
     parser.add_argument('--norm', type=str, default="BatchNorm", help='norm name, options: [BatchNorm, LayerNorm, InstanceNorm]')  # why instancenorm == batchnorm?
@@ -60,7 +61,7 @@ if __name__ == '__main__':
     parser.add_argument('--cluster', type=int, default=0, help='cluster num; False 0')
     parser.add_argument('--cluster_size', type=int, default=2, help='cluster size')
     parser.add_argument('--orthogonal', type=int, default=1, help='orthogonal feature_mix; True 1 False 0')
-    parser.add_argument('--orthogonal_loss', type=float, default=2, help='orthogonal feature_mix loss weight;')
+    parser.add_argument('--orthogonal_loss', type=float, default=0.5, help='orthogonal feature_mix loss weight;')
     parser.add_argument('--layer_pos_embed', type=int, default=0, help='add pos embedding each layer; True 1 False 0')
 
 
@@ -95,7 +96,7 @@ if __name__ == '__main__':
     parser.add_argument('--patience', type=int, default=10, help='early stopping patience')
     parser.add_argument('--learning_rate', type=float, default=0.0001, help='optimizer learning rate')
     parser.add_argument('--des', type=str, default='test', help='exp description')
-    parser.add_argument('--loss', type=str, default='mse', help='loss function, option: [mse, mae]')
+    parser.add_argument('--loss', type=str, default='mae', help='loss function, option: [mse, mae]')
     parser.add_argument('--lradj', type=str, default='type4', help='adjust learning rate')
     parser.add_argument('--pct_start', type=float, default=0.3, help='pct_start')
     parser.add_argument('--use_amp', action='store_true', help='use automatic mixed precision training', default=False)

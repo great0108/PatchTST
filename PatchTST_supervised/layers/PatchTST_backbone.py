@@ -21,7 +21,7 @@ class PatchTST_backbone(nn.Module):
                  padding_var:Optional[int]=None, attn_mask:Optional[Tensor]=None, res_attention:bool=True, pre_norm:bool=False, store_attn:bool=False,
                  pe:str='zeros', learn_pe:bool=True, fc_dropout:float=0., head_dropout = 0, padding_patch = None,
                  pretrain_head:bool=False, head_type = 'flatten', individual = False, revin = True, affine = True, subtract_last = False,
-                 verbose:bool=False, feature_mix=0, mask_kernel_ratio=1, reducing_kernel=False, add_std=False, cluster=0, cluster_size=3, orthogonal=0, layer_pos_embed=0, **kwargs):
+                 verbose:bool=False, feature_mix=0, d_mix=128, mask_kernel_ratio=1, reducing_kernel=False, add_std=False, cluster=0, cluster_size=3, orthogonal=0, layer_pos_embed=0, **kwargs):
         
         super().__init__()
         
@@ -65,7 +65,7 @@ class PatchTST_backbone(nn.Module):
             self.head = self.create_pretrain_head(self.head_nf, c_in, fc_dropout) # custom head passed as a partial func with all its kwargs
         elif head_type == 'flatten': 
             self.head = Flatten_Head(self.individual, self.n_vars, self.head_nf, target_window, d_ff=d_ff, head_dropout=head_dropout, 
-                                    feature_mix=feature_mix, activation=act, cluster=cluster, cluster_size=cluster_size, orthogonal=orthogonal)
+                                    feature_mix=feature_mix, d_mix=d_mix, activation=act, cluster=cluster, cluster_size=cluster_size, orthogonal=orthogonal)
         
     
     def forward(self, z):                                                                   # z: [bs x nvars x seq_len]
@@ -114,7 +114,7 @@ class PatchTST_backbone(nn.Module):
 
 
 class Flatten_Head(nn.Module):
-    def __init__(self, individual, n_vars, nf, target_window, d_ff=128, head_dropout=0, feature_mix=0, activation="gelu", cluster=0, cluster_size=3, orthogonal=0):
+    def __init__(self, individual, n_vars, nf, target_window, d_ff=128, head_dropout=0, feature_mix=0, d_mix=128, activation="gelu", cluster=0, cluster_size=3, orthogonal=0):
         super().__init__()
         
         self.individual = individual
@@ -138,15 +138,17 @@ class Flatten_Head(nn.Module):
             self.dropout = nn.Dropout(head_dropout)
 
             if feature_mix == 2:
-                self.time_linear = nn.Sequential(nn.Linear(nf, d_ff*2),
+                self.time_linear = nn.Sequential(nn.Linear(nf, d_mix*2),
                                                  get_activation_fn(activation),
                                                  nn.Dropout(head_dropout),
-                                                 nn.Linear(d_ff*2, d_ff))
+                                                 nn.Linear(d_mix*2, d_mix))
                 self.feature_linear = nn.Sequential(nn.Linear(n_vars, n_vars*8),
                                                     get_activation_fn(activation),
                                                     nn.Dropout(head_dropout),
                                                     nn.Linear(n_vars*8, n_vars))
-                self.linear = nn.Linear(d_ff, target_window)
+                self.linear = nn.Linear(d_mix, target_window)
+                self.norm = nn.LayerNorm(nf)
+                self.norm2 = nn.LayerNorm(n_vars)
 
             if cluster:
                 self.linears = nn.ModuleList()
@@ -169,9 +171,11 @@ class Flatten_Head(nn.Module):
         else:
             if self.feature_mix == 2:
                 x = self.flatten(x)                       # x: [bs x nvars x d_model * patch_num]
+                x = self.norm(x)
                 x = self.time_linear(x)                   # x: [bs x nvars x d_ff]
 
-                x2 = x.permute(0, 2, 1)                   
+                x2 = x.permute(0, 2, 1)
+                x2 = self.norm2(x2)                   
                 x2 = self.feature_linear(x2)              
                 x2 = x2.permute(0, 2, 1)                  # x2: [bs x nvars x d_ff]
 
