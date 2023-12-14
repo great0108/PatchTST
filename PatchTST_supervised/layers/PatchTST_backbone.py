@@ -171,7 +171,7 @@ class Flatten_Head(nn.Module):
         else:
             if self.feature_mix == 2:
                 x = self.flatten(x)                       # x: [bs x nvars x d_model * patch_num]
-                x = self.norm(x)
+                # x = self.norm(x)
                 x = self.time_linear(x)                   # x: [bs x nvars x d_ff]
 
                 x2 = x.permute(0, 2, 1)
@@ -180,7 +180,7 @@ class Flatten_Head(nn.Module):
                 x2 = x2.permute(0, 2, 1)                  # x2: [bs x nvars x d_ff]
 
                 if self.orthogonal:
-                    reg = torch.mean(torch.abs(x * x2))
+                    reg = torch.mean(torch.abs(torch.mean(x.detach() * x2, dim=-1)))
 
                 x = x + x2
                 x = x.unsqueeze(-1)

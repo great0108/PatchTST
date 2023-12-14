@@ -61,7 +61,7 @@ if __name__ == '__main__':
     parser.add_argument('--cluster', type=int, default=0, help='cluster num; False 0')
     parser.add_argument('--cluster_size', type=int, default=2, help='cluster size')
     parser.add_argument('--orthogonal', type=int, default=1, help='orthogonal feature_mix; True 1 False 0')
-    parser.add_argument('--orthogonal_loss', type=float, default=0.5, help='orthogonal feature_mix loss weight;')
+    parser.add_argument('--orthogonal_loss', type=float, default=1, help='orthogonal feature_mix loss weight;')
     parser.add_argument('--layer_pos_embed', type=int, default=0, help='add pos embedding each layer; True 1 False 0')
 
 
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     parser.add_argument('--patience', type=int, default=10, help='early stopping patience')
     parser.add_argument('--learning_rate', type=float, default=0.0001, help='optimizer learning rate')
     parser.add_argument('--des', type=str, default='test', help='exp description')
-    parser.add_argument('--loss', type=str, default='huber', help='loss function, option: [mse, mae, huber]')
+    parser.add_argument('--loss', type=str, default='mse', help='loss function, option: [mse, mae, huber]')
     parser.add_argument('--lradj', type=str, default='type4', help='adjust learning rate')
     parser.add_argument('--pct_start', type=float, default=0.3, help='pct_start')
     parser.add_argument('--use_amp', action='store_true', help='use automatic mixed precision training', default=False)

@@ -352,3 +352,36 @@ mse:0.37664344906806946, mae:0.3905334174633026, rse:0.5819432735443115
 test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df256_fc1_ebtimeF_dtTrue_test_1  
 mse:0.3805592954158783, mae:0.3920004069805145, rse:0.5849605798721313
 
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df256_fc1_ebtimeF_dtTrue_test_0  
+mse:0.377078115940094, mae:0.39682209491729736, rse:0.5822789669036865
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df256_fc1_ebtimeF_dtTrue_test_1  
+mse:0.3784816563129425, mae:0.39769741892814636, rse:0.5833616256713867
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df256_fc1_ebtimeF_dtTrue_test_0  
+mse:0.3771460950374603, mae:0.3923729360103607, rse:0.5823314189910889
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df256_fc1_ebtimeF_dtTrue_test_0  
+mse:0.37477147579193115, mae:0.4047626256942749, rse:0.580495297908783
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df256_fc1_ebtimeF_dtTrue_test_0  
+mse:0.37818148732185364, mae:0.40232226252555847, rse:0.5831302404403687
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df256_fc1_ebtimeF_dtTrue_test_0  
+mse:0.378745973110199, mae:0.403907835483551, rse:0.5835652947425842
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df256_fc1_ebtimeF_dtTrue_test_1  
+mse:0.3811075687408447, mae:0.4031323194503784, rse:0.585381805896759
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df256_fc1_ebtimeF_dtTrue_test_0  
+mse:0.37263989448547363, mae:0.3963276445865631, rse:0.5788421034812927
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df256_fc1_ebtimeF_dtTrue_test_1  
+mse:0.3698330223560333, mae:0.3980728089809418, rse:0.5766579508781433
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df256_fc1_ebtimeF_dtTrue_test_0  
+mse:0.3724449872970581, mae:0.4019289016723633, rse:0.5786907076835632
+
+test_PatchTST_ETTh1_ftM_sl96_ll48_pl96_dm64_nh8_el3_dl1_df256_fc1_ebtimeF_dtTrue_test_0  
+mse:0.3727515935897827, mae:0.39657336473464966, rse:0.5789288282394409
+
