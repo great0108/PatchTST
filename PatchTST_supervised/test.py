@@ -36,8 +36,12 @@ from data_provider.data_loader import Dataset_ETT_hour
 # add feature_mix dim param
 # add feature_mix layernorm
 
-a = torch.tensor([2, 1, 2, 1, 0, 0, 1])
-b = torch.sort(a)[0]
-order = torch.sort(a).indices
-order2 = torch.sort(order).indices
-print(b[order2])
+import pickle
+
+my_dict = {'I':0, 'my':1, 'me':2, 'mine':3}
+with open('mydict.pkl', 'wb') as tf:
+	pickle.dump(my_dict, tf)
+
+with open('mydict.pkl', 'wb')as tf:
+	new = pickle.load(tf)
+print(new)
