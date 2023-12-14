@@ -53,6 +53,8 @@ class Exp_Main(Exp_Basic):
             criterion = nn.MSELoss()
         elif loss == "mae":
             criterion = nn.L1Loss()
+        elif loss == "huber":
+            criterion = nn.HuberLoss()
         return criterion
 
     def vali(self, vali_data, vali_loader, criterion):

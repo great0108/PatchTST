@@ -36,3 +36,10 @@ class LocalMask():
     @property
     def mask(self):
         return self._mask
+    
+def localMask(L, kernel_size):
+    with torch.no_grad():
+        a = torch.arange(L).repeat(L,1)
+        mask = torch.abs(torch.arange(L).reshape(-1, 1) - a) > kernel_size
+        mask = mask.bool()
+        return mask
