@@ -267,10 +267,11 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
             x = self.W_P(x)                                                      # x: [bs x nvars x patch_num x d_model]
 
         u = torch.reshape(x, (x.shape[0]*x.shape[1],x.shape[2],x.shape[3]))      # u: [bs * nvars x patch_num x d_model]
-        if self.layer_pos_embed:
+        if self.layer_pos_embed == None:
             u = self.dropout(u)
+            u = self.dropout(u + self.W_pos)  
         else:
-            u = self.dropout(u + self.W_pos)                                     # u: [bs * nvars x patch_num x d_model]
+            u = self.dropout(u)                                                  # u: [bs * nvars x patch_num x d_model]
 
         # Encoder
         z = self.encoder(u)                                                      # z: [bs * nvars x patch_num x d_model]
@@ -359,7 +360,7 @@ class TSTEncoderLayer(nn.Module):
         else:
             self.norm_feature = nn.Sequential(Transpose(1,2), nn.InstanceNorm1d(d_model), Transpose(1,2))
 
-        self.mask = LocalMask(q_len, q_len * mask_kernel_ratio, device="cuda")
+        self.mask = LocalMask(q_len, q_len * mask_kernel_ratio, device="cpu")
 
         self.pre_norm = pre_norm
         self.store_attn = store_attn
@@ -373,7 +374,7 @@ class TSTEncoderLayer(nn.Module):
         if attn_mask == None:
             attn_mask = self.mask.mask
 
-        if self.layer_pos_embed:
+        if self.layer_pos_embed != None:
             src = src + self.layer_pos_embed
         # Multi-Head attention sublayer
         if self.pre_norm:

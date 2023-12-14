@@ -52,16 +52,17 @@ if __name__ == '__main__':
     parser.add_argument('--decomposition', type=int, default=0, help='decomposition; True 1 False 0')
     parser.add_argument('--kernel_size', type=int, default=25, help='decomposition-kernel')
     parser.add_argument('--individual', type=int, default=0, help='individual head; True 1 False 0')
-    parser.add_argument('--feature_mix', type=int, default=2, help='feature_mix; 0: no feature_mix 1: transformer feature_mix 2: head feature_mix')
+    parser.add_argument('--feature_mix', type=int, default=0, help='feature_mix; 0: no feature_mix 1: transformer feature_mix 2: head feature_mix')
     parser.add_argument('--kernel_ratio', type=float, default=1, help='kernel range; 1: all range 0: one range')
+    
     parser.add_argument('--reducing_kernel', type=int, default=0, help='reducing kernel; True 1 False 0')
     parser.add_argument('--norm', type=str, default="BatchNorm", help='norm name, options: [BatchNorm, LayerNorm, InstanceNorm]')  # why instancenorm == batchnorm?
     parser.add_argument('--add_std', type=int, default=0, help='add std in head input; True 1 False 0')
     parser.add_argument('--cluster', type=int, default=0, help='cluster num; False 0')
     parser.add_argument('--cluster_size', type=int, default=2, help='cluster size')
-    parser.add_argument('--orthogonal', type=int, default=1, help='orthogonal feature_mix; True 1 False 0')
+    parser.add_argument('--orthogonal', type=int, default=0, help='orthogonal feature_mix; True 1 False 0')
     parser.add_argument('--orthogonal_loss', type=float, default=0.2, help='orthogonal feature_mix loss weight;')
-    parser.add_argument('--layer_pos_embed', type=int, default=0, help='add pos embedding each layer; True 1 False 0')
+    parser.add_argument('--layer_pos_embed', type=int, default=1, help='add pos embedding each layer; True 1 False 0')
 
 
     # Formers 
@@ -101,7 +102,7 @@ if __name__ == '__main__':
     parser.add_argument('--use_amp', action='store_true', help='use automatic mixed precision training', default=False)
 
     # GPU
-    parser.add_argument('--use_gpu', type=bool, default=True, help='use gpu')
+    parser.add_argument('--use_gpu', type=bool, default=False, help='use gpu')
     parser.add_argument('--gpu', type=int, default=0, help='gpu')
     parser.add_argument('--use_multi_gpu', action='store_true', help='use multiple gpus', default=False)
     parser.add_argument('--devices', type=str, default='0,1,2,3', help='device ids of multile gpus')
