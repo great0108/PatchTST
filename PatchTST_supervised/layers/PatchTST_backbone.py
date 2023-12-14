@@ -363,7 +363,7 @@ class TSTEncoderLayer(nn.Module):
         else:
             self.norm_feature = nn.Sequential(Transpose(1,2), nn.InstanceNorm1d(d_model), Transpose(1,2))
 
-        self.mask = LocalMask(q_len, q_len * mask_kernel_ratio, device="cpu")
+        self.mask = LocalMask(q_len, q_len * mask_kernel_ratio, device="cuda")
 
         self.pre_norm = pre_norm
         self.store_attn = store_attn
