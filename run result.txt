@@ -1,3 +1,7 @@
 ETTh1 
 patchtst  mse : 0.375, mae: 0.393
 orthogonal  mse : 0.372, mae : 0.396
+cluster  
+
+Electricity
+patchtst  mse : 0.138, mae : 0.230

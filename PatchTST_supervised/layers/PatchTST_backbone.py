@@ -12,6 +12,7 @@ import numpy as np
 from layers.PatchTST_layers import *
 from layers.RevIN import RevIN
 from utils.masking import LocalMask, localMask
+from data_provider.data_cluster import cluster_result
 
 # Cell
 class PatchTST_backbone(nn.Module):
@@ -20,7 +21,7 @@ class PatchTST_backbone(nn.Module):
                  d_ff:int=256, norm:str='BatchNorm', attn_dropout:float=0., dropout:float=0., act:str="gelu", key_padding_mask:bool='auto',
                  padding_var:Optional[int]=None, attn_mask:Optional[Tensor]=None, res_attention:bool=True, pre_norm:bool=False, store_attn:bool=False,
                  pe:str='zeros', learn_pe:bool=True, fc_dropout:float=0., head_dropout = 0, padding_patch = None,
-                 pretrain_head:bool=False, head_type = 'flatten', individual = False, revin = True, affine = True, subtract_last = False, isGpu=0,
+                 pretrain_head:bool=False, head_type = 'flatten', individual = False, revin = True, affine = True, subtract_last = False, isGpu=0, dataset=None,
                  verbose:bool=False, feature_mix=0, d_mix=128, mask_kernel_ratio=1, reducing_kernel=False, add_std=False, cluster=0, cluster_size=3, orthogonal=0, layer_pos_embed=0, **kwargs):
         
         super().__init__()
@@ -43,7 +44,7 @@ class PatchTST_backbone(nn.Module):
                                 n_layers=n_layers, d_model=d_model, n_heads=n_heads, d_k=d_k, d_v=d_v, d_ff=d_ff,
                                 attn_dropout=attn_dropout, dropout=dropout, act=act, key_padding_mask=key_padding_mask, padding_var=padding_var,
                                 attn_mask=attn_mask, res_attention=res_attention, pre_norm=pre_norm, store_attn=store_attn,
-                                pe=pe, learn_pe=learn_pe, verbose=verbose, feature_mix=feature_mix, mask_kernel_ratio=mask_kernel_ratio, isGpu=isGpu,
+                                pe=pe, learn_pe=learn_pe, verbose=verbose, feature_mix=feature_mix, mask_kernel_ratio=mask_kernel_ratio, isGpu=isGpu, dataset=dataset,
                                 reducing_kernel=reducing_kernel, cluster=cluster, cluster_size=cluster_size, layer_pos_embed=layer_pos_embed, **kwargs)
 
         # Head
@@ -64,7 +65,7 @@ class PatchTST_backbone(nn.Module):
         if self.pretrain_head: 
             self.head = self.create_pretrain_head(self.head_nf, c_in, fc_dropout) # custom head passed as a partial func with all its kwargs
         elif head_type == 'flatten': 
-            self.head = Flatten_Head(self.individual, self.n_vars, self.head_nf, target_window, d_ff=d_ff, head_dropout=head_dropout, 
+            self.head = Flatten_Head(self.individual, self.n_vars, self.head_nf, target_window, d_ff=d_ff, head_dropout=head_dropout, dataset=dataset,
                                     feature_mix=feature_mix, d_mix=d_mix, activation=act, cluster=cluster, cluster_size=cluster_size, orthogonal=orthogonal)
         
     
@@ -114,7 +115,7 @@ class PatchTST_backbone(nn.Module):
 
 
 class Flatten_Head(nn.Module):
-    def __init__(self, individual, n_vars, nf, target_window, d_ff=128, head_dropout=0, feature_mix=0, d_mix=128, activation="gelu", cluster=0, cluster_size=3, orthogonal=0):
+    def __init__(self, individual, n_vars, nf, target_window, d_ff=128, head_dropout=0, feature_mix=0, d_mix=128, activation="gelu", cluster=0, cluster_size=3, orthogonal=0, dataset=None):
         super().__init__()
         
         self.individual = individual
@@ -123,6 +124,7 @@ class Flatten_Head(nn.Module):
         self.cluster = cluster
         self.cluster_size = cluster_size
         self.orthogonal = orthogonal
+        self.dataset = dataset
         
         if self.individual:
             self.linears = nn.ModuleList()
@@ -141,7 +143,8 @@ class Flatten_Head(nn.Module):
                 self.time_linear = nn.Sequential(nn.Linear(nf, d_mix*2),
                                                  get_activation_fn(activation),
                                                  nn.Dropout(head_dropout),
-                                                 nn.Linear(d_mix*2, d_mix))
+                                                 nn.Linear(d_mix*2, d_mix),
+                                                 nn.Dropout(head_dropout))
                 self.feature_linear = nn.Sequential(nn.Linear(n_vars, n_vars*8),
                                                     get_activation_fn(activation),
                                                     nn.Dropout(head_dropout),
@@ -156,7 +159,7 @@ class Flatten_Head(nn.Module):
                 self.flattens = nn.ModuleList()
                 for i in range(self.cluster_size):
                     self.flattens.append(nn.Flatten(start_dim=-2))
-                    self.linears.append(nn.Linear(nf, target_window))
+                    self.linears.append(nn.Linear(nf if feature_mix == 0 else d_mix, target_window))
                     self.dropouts.append(nn.Dropout(head_dropout))
             
     def forward(self, x):                                 # x: [bs x nvars x d_model x patch_num]
@@ -186,12 +189,13 @@ class Flatten_Head(nn.Module):
                 x = x.unsqueeze(-1)
 
             if self.cluster:
-                cluster_labels = torch.tensor([0,0,0,0,0,0,0])
+                cluster_labels = cluster_result(self.dataset, self.cluster, self.cluster_size)
+                cluster = int(torch.max(cluster_labels) + 1)
                 cluster_counts = torch.unique(cluster_labels, return_counts=True)[1]
                 order = torch.sort(cluster_labels).indices
                 order2 = torch.sort(order).indices
                 x_out = []
-                for i in range(self.cluster):
+                for i in range(cluster):
                     for j in range(self.cluster_size):
                         z = self.flattens[j](x[:,i,:,:])          # z: [bs x d_model * patch_num]
                         z = self.linears[j](z)                    # z: [bs x target_window]
@@ -218,7 +222,7 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
     def __init__(self, c_in, patch_num, patch_len, max_seq_len=1024,
                  n_layers=3, d_model=128, n_heads=16, d_k=None, d_v=None,
                  d_ff=256, norm='BatchNorm', attn_dropout=0., dropout=0., act="gelu", store_attn=False,
-                 key_padding_mask='auto', padding_var=None, attn_mask=None, res_attention=True, pre_norm=False, isGpu=0,
+                 key_padding_mask='auto', padding_var=None, attn_mask=None, res_attention=True, pre_norm=False, isGpu=0, dataset=None,
                  pe='zeros', learn_pe=True, verbose=False, feature_mix=True, mask_kernel_ratio=1, reducing_kernel=False, cluster=0, cluster_size=3, layer_pos_embed=0, **kwargs):
         
         
@@ -228,6 +232,7 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
         self.patch_len = patch_len
         self.cluster = cluster
         self.cluster_size = cluster_size
+        self.dataset = dataset
         
         # Input encoding
         q_len = patch_num
@@ -253,12 +258,14 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
         
     def forward(self, x) -> Tensor:                                              # x: [bs x nvars x patch_len x patch_num]
         if self.cluster:
-            cluster_labels = torch.tensor([0,0,0,0,0,0,0])
+            cluster_labels = cluster_result(self.dataset, self.cluster, self.cluster_size)
+            cluster = int(torch.max(cluster_labels) + 1)
             x = x.permute(0, 3, 1, 2)
             xs = []
-            for i in range(self.cluster):
+            for i in range(cluster):
                 xi = x[:, :, cluster_labels == i]
                 xi = F.pad(xi, (0, 0, 0, self.cluster_size - xi.shape[2]), "constant", 0)    # x: [bs x patch_num x cluster_size x patch_len]
+                # xi = F.pad(xi, (0, 0, 0, self.cluster_size - xi.shape[2]), "replicate", 0)    # x: [bs x patch_num x cluster_size x patch_len]
                 xi = torch.reshape(xi, (x.shape[0], x.shape[1], -1))                         # x: [bs x patch_num x cluster_size * patch_len]
                 xi = self.W_P(xi)                                                            # x: [bs x patch_num x d_model]
                 xs.append(xi)

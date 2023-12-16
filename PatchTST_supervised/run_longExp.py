@@ -32,8 +32,8 @@ if __name__ == '__main__':
     # parser.add_argument('--aug', type=int, default=0, help='0: no aug 1: distance aug 2: normal aug 3: slope aug')  # slope aug = positional encoding? no
 
     # forecasting task
-    parser.add_argument('--seq_len', type=int, default=96, help='input sequence length')
-    parser.add_argument('--label_len', type=int, default=48, help='start token length')
+    parser.add_argument('--seq_len', type=int, default=192, help='input sequence length')
+    parser.add_argument('--label_len', type=int, default=96, help='start token length')
     parser.add_argument('--pred_len', type=int, default=96, help='prediction sequence length')
 
 
@@ -41,7 +41,7 @@ if __name__ == '__main__':
     #parser.add_argument('--individual', action='store_true', default=False, help='DLinear: a linear layer for each variate(channel) individually')
 
     # PatchTST
-    parser.add_argument('--fc_dropout', type=float, default=0.2, help='fully connected dropout')
+    parser.add_argument('--fc_dropout', type=float, default=0.3, help='fully connected dropout')
     parser.add_argument('--head_dropout', type=float, default=0.3, help='head dropout')
     parser.add_argument('--patch_len', type=int, default=16, help='patch length')
     parser.add_argument('--stride', type=int, default=8, help='stride')
@@ -70,11 +70,11 @@ if __name__ == '__main__':
     parser.add_argument('--enc_in', type=int, default=7, help='encoder input size') # DLinear with --individual, use this hyperparameter as the number of channels
     parser.add_argument('--dec_in', type=int, default=7, help='decoder input size')
     parser.add_argument('--c_out', type=int, default=7, help='output size')
-    parser.add_argument('--d_model', type=int, default=64, help='dimension of model')
-    parser.add_argument('--n_heads', type=int, default=8, help='num of heads')
+    parser.add_argument('--d_model', type=int, default=16, help='dimension of model')
+    parser.add_argument('--n_heads', type=int, default=4, help='num of heads')
     parser.add_argument('--e_layers', type=int, default=3, help='num of encoder layers')
     parser.add_argument('--d_layers', type=int, default=1, help='num of decoder layers')
-    parser.add_argument('--d_ff', type=int, default=256, help='dimension of fcn')
+    parser.add_argument('--d_ff', type=int, default=128, help='dimension of fcn')
 
     parser.add_argument('--moving_avg', type=int, default=25, help='window size of moving average')
     parser.add_argument('--factor', type=int, default=1, help='attn factor')
@@ -92,17 +92,17 @@ if __name__ == '__main__':
     parser.add_argument('--num_workers', type=int, default=10, help='data loader num workers')
     parser.add_argument('--itr', type=int, default=2, help='experiments times')
     parser.add_argument('--train_epochs', type=int, default=100, help='train epochs')
-    parser.add_argument('--batch_size', type=int, default=128, help='batch size of train input data')
+    parser.add_argument('--batch_size', type=int, default=64, help='batch size of train input data')
     parser.add_argument('--patience', type=int, default=10, help='early stopping patience')
     parser.add_argument('--learning_rate', type=float, default=0.0001, help='optimizer learning rate')
     parser.add_argument('--des', type=str, default='test', help='exp description')
     parser.add_argument('--loss', type=str, default='mse', help='loss function, option: [mse, mae, huber]')
-    parser.add_argument('--lradj', type=str, default='type4', help='adjust learning rate')
-    parser.add_argument('--pct_start', type=float, default=0.3, help='pct_start')
+    parser.add_argument('--lradj', type=str, default='type3', help='adjust learning rate')
+    parser.add_argument('--pct_start', type=float, default=0.2, help='pct_start')
     parser.add_argument('--use_amp', action='store_true', help='use automatic mixed precision training', default=False)
 
     # GPU
-    parser.add_argument('--use_gpu', type=bool, default=False, help='use gpu')
+    parser.add_argument('--use_gpu', type=bool, default=True, help='use gpu')
     parser.add_argument('--gpu', type=int, default=0, help='gpu')
     parser.add_argument('--use_multi_gpu', action='store_true', help='use multiple gpus', default=False)
     parser.add_argument('--devices', type=str, default='0,1,2,3', help='device ids of multile gpus')

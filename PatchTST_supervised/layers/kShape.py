@@ -127,6 +127,7 @@ def _kshape(x, k, centroid_init='zero', max_iter=100, n_jobs=1):
     distances = np.empty((m, k))
     
     for it in range(max_iter):
+        print("iter : {}".format(it + 1))
         old_idx = idx
 
         for j in range(k):
