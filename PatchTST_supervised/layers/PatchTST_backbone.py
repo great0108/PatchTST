@@ -140,16 +140,15 @@ class Flatten_Head(nn.Module):
             self.dropout = nn.Dropout(head_dropout)
 
             if feature_mix == 2:
-                self.time_linear = nn.Sequential(nn.Linear(nf, d_mix*2),
+                self.time_linear = nn.Sequential(nn.Linear(nf, nf*2),
                                                  get_activation_fn(activation),
                                                  nn.Dropout(head_dropout),
-                                                 nn.Linear(d_mix*2, d_mix),
-                                                 nn.Dropout(head_dropout))
-                self.feature_linear = nn.Sequential(nn.Linear(n_vars, n_vars*8),
+                                                 nn.Linear(nf*2, nf))
+                self.feature_linear = nn.Sequential(nn.Linear(n_vars, 64),
                                                     get_activation_fn(activation),
                                                     nn.Dropout(head_dropout),
-                                                    nn.Linear(n_vars*8, n_vars))
-                self.linear = nn.Linear(d_mix, target_window)
+                                                    nn.Linear(64, n_vars))
+                self.linear = nn.Linear(nf, target_window)
                 self.norm = nn.LayerNorm(nf)
                 self.norm2 = nn.LayerNorm(n_vars)
 
@@ -183,7 +182,11 @@ class Flatten_Head(nn.Module):
                 x2 = x2.permute(0, 2, 1)                  # x2: [bs x nvars x d_ff]
 
                 if self.orthogonal:
-                    reg = torch.mean(torch.abs(torch.mean(x.detach() * x2, dim=-1)))
+                    x3 = x.permute(0, 2, 1).detach()
+                    x3 = self.norm2(x3)                   
+                    x3 = self.feature_linear(x3)              
+                    x3 = x3.permute(0, 2, 1)              
+                    reg = torch.mean(torch.abs(torch.mean(x.detach() * x3, dim=-1)))
 
                 x = x + x2
                 x = x.unsqueeze(-1)

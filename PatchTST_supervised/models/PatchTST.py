@@ -56,12 +56,7 @@ class Model(nn.Module):
         orthogonal = configs.orthogonal
         layer_pos_embed = configs.layer_pos_embed
         isGpu = configs.use_gpu
-
-        dataset_dict = {
-            'ETTh1.csv': "ETTh1",
-            'electricity': "Electricity"
-        }
-        dataset = dataset_dict[configs.data_path]
+        dataset = None
         
         # model
         self.decomposition = decomposition

@@ -44,7 +44,7 @@ class Exp_Main(Exp_Basic):
         return data_set, data_loader
 
     def _select_optimizer(self):
-        model_optim = optim.Adam(self.model.parameters(), lr=self.args.learning_rate, weight_decay=0.001)
+        model_optim = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
         return model_optim
 
     def _select_criterion(self):
@@ -54,7 +54,7 @@ class Exp_Main(Exp_Basic):
         elif loss == "mae":
             criterion = nn.L1Loss()
         elif loss == "huber":
-            criterion = nn.HuberLoss()
+            criterion = nn.HuberLoss(delta=4)
         return criterion
 
     def vali(self, vali_data, vali_loader, criterion):

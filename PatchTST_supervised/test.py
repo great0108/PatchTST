@@ -22,27 +22,30 @@ n = 7
 length = 500
 
 dataset = Dataset_ETT_hour("./data/ETT/", features="M").data_x
-dataset = dataset[1000 : 1000+length]
+dataset = dataset[1500 : 1500+length]
 print(dataset.shape)
-univariate_ts_datasets = np.expand_dims(dataset.transpose(1, 0), axis=2)
-print(univariate_ts_datasets.shape)
+a = np.random.normal(scale=0.1, size=dataset.shape)
+dataset += a
+# univariate_ts_datasets = np.expand_dims(dataset.transpose(1, 0), axis=2)
+# print(univariate_ts_datasets.shape)
 
-# Model
-ksc = KShapeClusteringGPU(4, centroid_init='zero', max_iter=20)
-ksc.fit(univariate_ts_datasets)
+# # Model
+# ksc = KShapeClusteringGPU(4, centroid_init='zero', max_iter=20)
+# ksc.fit(univariate_ts_datasets)
 
-labels = ksc.labels_ # or ksc.predict(univariate_ts_datasets)
-# cluster_centroids = ksc.centroids_
+# labels = ksc.labels_ # or ksc.predict(univariate_ts_datasets)
+# # cluster_centroids = ksc.centroids_
 
-print(labels)
-counts = np.unique(labels, return_counts=True)[1]
-print(counts)
+# print(labels)
+# counts = np.unique(labels, return_counts=True)[1]
+# print(counts)
 
 plt.figure(figsize=(4, 5))
 for i in range(n):
     y = dataset[:, i]
     ax = plt.subplot(n, 1, i+1)
-    plt.plot(y)
+    plt.subplots_adjust(hspace=0)
+    plt.plot(y, color="g")
     plt.xticks(visible=False)
     ax.axes.xaxis.set_visible(False)
     ax.axes.yaxis.set_visible(False)
