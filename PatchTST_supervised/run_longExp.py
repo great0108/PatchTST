@@ -17,12 +17,12 @@ if __name__ == '__main__':
     parser.add_argument('--is_training', type=int, required=False, default=1, help='status')
     parser.add_argument('--model_id', type=str, required=False, default='test', help='model id')
     parser.add_argument('--model', type=str, required=False, default='PatchTST',
-                        help='model name, options: [Autoformer, Informer, Transformer]')
+                        help='model name, options: [Autoformer, Informer, Transformer, PatchTST, DLinear]')
 
     # data loader
     parser.add_argument('--data', type=str, required=False, default='custom', help='dataset type, options:[ETTh1, ETTh2, ETTm1, ETTm2, custom]')
-    parser.add_argument('--root_path', type=str, default='./data/electricity', help='root path of the data file')
-    parser.add_argument('--data_path', type=str, default='electricity.csv', help='data file')
+    parser.add_argument('--root_path', type=str, default='./data/weather', help='root path of the data file')
+    parser.add_argument('--data_path', type=str, default='weather.csv', help='data file')
     parser.add_argument('--features', type=str, default='M',
                         help='forecasting task, options:[M, S, MS]; M:multivariate predict multivariate, S:univariate predict univariate, MS:multivariate predict univariate')
     parser.add_argument('--target', type=str, default='OT', help='target feature in S or MS task')
@@ -38,11 +38,11 @@ if __name__ == '__main__':
 
 
     # DLinear
-    #parser.add_argument('--individual', action='store_true', default=False, help='DLinear: a linear layer for each variate(channel) individually')
+    # parser.add_argument('--individual', action='store_true', default=False, help='DLinear: a linear layer for each variate(channel) individually')
 
     # PatchTST
     parser.add_argument('--fc_dropout', type=float, default=0.2, help='fully connected dropout')
-    parser.add_argument('--head_dropout', type=float, default=0.3, help='head dropout')
+    parser.add_argument('--head_dropout', type=float, default=0.2, help='head dropout')
     parser.add_argument('--patch_len', type=int, default=16, help='patch length')
     parser.add_argument('--stride', type=int, default=8, help='stride')
     parser.add_argument('--padding_patch', default='end', help='None: None; end: padding on the end')
@@ -67,7 +67,8 @@ if __name__ == '__main__':
 
     # Formers 
     parser.add_argument('--embed_type', type=int, default=0, help='0: default 1: value embedding + temporal embedding + positional embedding 2: value embedding + temporal embedding 3: value embedding + positional embedding 4: value embedding')
-    parser.add_argument('--enc_in', type=int, default=321, help='encoder input size') # DLinear with --individual, use this hyperparameter as the number of channels
+    # traffic : 862, electricity : 321, weather : 21, ETT : 7
+    parser.add_argument('--enc_in', type=int, default=21, help='encoder input size') # DLinear with --individual, use this hyperparameter as the number of channels
     parser.add_argument('--dec_in', type=int, default=7, help='decoder input size')
     parser.add_argument('--c_out', type=int, default=7, help='output size')
     parser.add_argument('--d_model', type=int, default=128, help='dimension of model')
@@ -90,13 +91,13 @@ if __name__ == '__main__':
 
     # optimization
     parser.add_argument('--num_workers', type=int, default=10, help='data loader num workers')
-    parser.add_argument('--itr', type=int, default=2, help='experiments times')
+    parser.add_argument('--itr', type=int, default=1, help='experiments times')
     parser.add_argument('--train_epochs', type=int, default=100, help='train epochs')
-    parser.add_argument('--batch_size', type=int, default=32, help='batch size of train input data')
+    parser.add_argument('--batch_size', type=int, default=64, help='batch size of train input data')
     parser.add_argument('--patience', type=int, default=5, help='early stopping patience')
     parser.add_argument('--learning_rate', type=float, default=0.00005, help='optimizer learning rate')
     parser.add_argument('--des', type=str, default='test', help='exp description')
-    parser.add_argument('--loss', type=str, default='mse', help='loss function, option: [mse, mae, huber]')
+    parser.add_argument('--loss', type=str, default='huber', help='loss function, option: [mse, mae, huber]')
     parser.add_argument('--lradj', type=str, default='type4', help='adjust learning rate')
     parser.add_argument('--pct_start', type=float, default=0.2, help='pct_start')
     parser.add_argument('--use_amp', action='store_true', help='use automatic mixed precision training', default=False)
